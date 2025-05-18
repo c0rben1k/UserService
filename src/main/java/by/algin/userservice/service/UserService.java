@@ -3,6 +3,7 @@ package by.algin.userservice.service;
 import by.algin.userservice.DTO.request.RegisterRequest;
 import by.algin.userservice.DTO.response.ApiResponse;
 import by.algin.userservice.DTO.response.UserResponse;
+import by.algin.userservice.constants.RoleConstants;
 import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.EmailAlreadyExistsException;
@@ -50,7 +51,7 @@ public class UserService {
             throw new PasswordsDoNotMatchException();
         }
 
-        Role userRole = roleRepository.findByName("ROLE_USER")
+        Role userRole = roleRepository.findByName(RoleConstants.ROLE_USER)
                 .orElseThrow(RoleNotFoundException::new);
 
         User user = User.builder()

@@ -8,6 +8,7 @@ import by.algin.userservice.DTO.response.ApiResponse;
 import by.algin.userservice.DTO.response.AuthResponse;
 import by.algin.userservice.DTO.response.TokenValidationResponse;
 import by.algin.userservice.DTO.response.UserResponse;
+import by.algin.userservice.constants.PathConstants;
 import by.algin.userservice.exception.TokenExpiredException;
 import by.algin.userservice.service.AuthService;
 import by.algin.userservice.service.UserService;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping(PathConstants.API_AUTH)
 @RequiredArgsConstructor
 public class AuthController {
 

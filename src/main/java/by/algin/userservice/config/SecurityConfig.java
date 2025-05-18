@@ -1,7 +1,10 @@
 package by.algin.userservice.config;
 
+import by.algin.userservice.constants.PathConstants;
+import by.algin.userservice.constants.RoleConstants;
 import by.algin.userservice.security.JwtAuthenticationEntryPoint;
 import by.algin.userservice.security.JwtAuthenticationFilter;
+import by.algin.userservice.security.JwtAuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -28,12 +32,12 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/**")
+                .securityMatcher(PathConstants.API)
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(PathConstants.API_AUTH).permitAll()
                         .anyRequest().authenticated()
                 );
 
@@ -47,24 +51,31 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers(PathConstants.ROOT).permitAll()
+                        .requestMatchers(PathConstants.AUTH_LOGIN, PathConstants.AUTH_LOGOUT).permitAll()
+                        .requestMatchers(PathConstants.CSS, PathConstants.JS, PathConstants.IMAGES).permitAll()
+                        .requestMatchers(PathConstants.ADMIN_DASHBOARD).hasAuthority(RoleConstants.ROLE_ADMIN)
+                        .requestMatchers(PathConstants.DASHBOARD).authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/auth/login")
-                        .loginProcessingUrl("/auth/login")
-                        .defaultSuccessUrl("/dashboard", true)
+                        .loginPage(PathConstants.AUTH_LOGIN)
+                        .loginProcessingUrl(PathConstants.AUTH_LOGIN)
+                        .successHandler(authenticationSuccessHandler())
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/auth/logout")
-                        .logoutSuccessUrl("/")
+                        .logoutUrl(PathConstants.AUTH_LOGOUT)
+                        .logoutSuccessUrl(PathConstants.ROOT)
                         .permitAll()
                 );
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return new JwtAuthenticationSuccessHandler();
     }
 
     @Bean

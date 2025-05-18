@@ -1,6 +1,7 @@
 package by.algin.userservice.controller;
 
 import by.algin.userservice.DTO.request.RegisterRequest;
+import by.algin.userservice.constants.PathConstants;
 import by.algin.userservice.exception.EmailAlreadyExistsException;
 import by.algin.userservice.exception.PasswordsDoNotMatchException;
 import by.algin.userservice.exception.TokenExpiredException;
@@ -23,7 +24,7 @@ public class WebAuthController {
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
         model.addAttribute("user", new RegisterRequest());
-        return "register";
+        return PathConstants.TEMPLATE_REGISTER;
     }
 
     @PostMapping("/register")
@@ -32,61 +33,61 @@ public class WebAuthController {
                            Model model) {
         try {
             if (result.hasErrors()) {
-                return "register";
+                return PathConstants.TEMPLATE_REGISTER;
             }
 
             userService.registerUser(user);
             return "redirect:/auth/registration-success";
         } catch (UsernameAlreadyExistsException e) {
             model.addAttribute("emailError", "Username already exists");
-            return "register";
+            return PathConstants.TEMPLATE_REGISTER;
         } catch (EmailAlreadyExistsException e) {
             model.addAttribute("emailError", "Email already exists");
-            return "register";
+            return PathConstants.TEMPLATE_REGISTER;
         } catch (PasswordsDoNotMatchException e) {
             model.addAttribute("passwordError", "Passwords don't match");
-            return "register";
+            return PathConstants.TEMPLATE_REGISTER;
         }
     }
 
     @GetMapping("/registration-success")
     public String registrationSuccess() {
-        return "registration-success";
+        return PathConstants.TEMPLATE_REGISTRATION_SUCCESS;
     }
 
     @GetMapping("/login")
     public String showLoginForm() {
-        return "login";
+        return PathConstants.TEMPLATE_LOGIN;
     }
 
     @GetMapping("/confirm")
     public String confirmAccount(@RequestParam("token") String token, Model model) {
         try {
             userService.confirmAccount(token);
-            return "account-confirmed";
+            return PathConstants.TEMPLATE_ACCOUNT_CONFIRMED;
         } catch (TokenExpiredException e) {
             model.addAttribute("email", e.getEmail());
-            return "token-expired";
+            return PathConstants.TEMPLATE_TOKEN_EXPIRED;
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
-            return "error";
+            return PathConstants.TEMPLATE_ERROR;
         }
     }
 
     @GetMapping("/token-expired")
     public String tokenExpired(@RequestParam("email") String email, Model model) {
         model.addAttribute("email", email);
-        return "token-expired";
+        return PathConstants.TEMPLATE_TOKEN_EXPIRED;
     }
 
     @PostMapping("/resend-confirmation")
     public String resendToken(@RequestParam("email") String email, Model model) {
         try {
             userService.resendConfirmationToken(email);
-            return "token-resent";
+            return PathConstants.TEMPLATE_TOKEN_RESENT;
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
-            return "error";
+            return PathConstants.TEMPLATE_ERROR;
         }
     }
 }

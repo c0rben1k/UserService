@@ -1,6 +1,7 @@
 package by.algin.userservice.controller;
 
 import by.algin.userservice.DTO.response.UserResponse;
+import by.algin.userservice.constants.PathConstants;
 import by.algin.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping(PathConstants.API_USERS)
 @RequiredArgsConstructor
 public class UserController {
 
