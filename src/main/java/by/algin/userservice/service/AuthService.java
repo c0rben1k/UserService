@@ -8,10 +8,10 @@ import by.algin.userservice.DTO.request.TokenValidationRequest;
 import by.algin.userservice.DTO.response.ApiResponse;
 import by.algin.userservice.DTO.response.AuthResponse;
 import by.algin.userservice.DTO.response.TokenValidationResponse;
-import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.AccountDisabledException;
 import by.algin.userservice.exception.InvalidCredentialsException;
+import by.algin.userservice.mapper.AuthMapper;
 import by.algin.userservice.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +25,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-
-import java.util.*;
-import java.util.stream.Collectors;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -37,6 +33,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final AuthMapper authMapper;
 
     public ApiResponse<AuthResponse> login(LoginRequest loginRequest) {
         log.info("Attempting login for user: {}", loginRequest.getUsernameOrEmail());
@@ -62,21 +59,9 @@ public class AuthService {
 
             String accessToken = jwtService.generateAccessToken(authentication);
             String refreshToken = jwtService.generateRefreshToken(authentication);
+            Long expiresIn = jwtService.getClaimsFromToken(accessToken).getExpiration().getTime();
 
-            Set<String> roles = user.getRoles().stream()
-                    .map(Role::getName)
-                    .collect(Collectors.toSet());
-
-            AuthResponse authResponse = AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .tokenType("Bearer")
-                    .expiresIn(jwtService.getClaimsFromToken(accessToken).getExpiration().getTime())
-                    .userId(user.getId())
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .roles(roles)
-                    .build();
+            AuthResponse authResponse = authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
 
             log.info("User logged in successfully: {}", user.getUsername());
 
@@ -108,24 +93,15 @@ public class AuthService {
         }
 
         String accessToken = jwtService.generateAccessToken(user);
+        Long expiresIn = jwtService.getClaimsFromToken(accessToken).getExpiration().getTime();
 
-        Set<String> roles = user.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-
-        AuthResponse authResponse = AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshRequest.getRefreshToken())
-                .tokenType("Bearer")
-                .expiresIn(jwtService.getClaimsFromToken(accessToken).getExpiration().getTime())
-                .userId(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .roles(roles)
-                .build();
-
+        AuthResponse authResponse = authMapper.toAuthResponse(
+                user,
+                accessToken,
+                refreshRequest.getRefreshToken(),
+                expiresIn
+        );
         log.info("Token refreshed successfully for user: {}", user.getUsername());
-
         return new ApiResponse<>(true, "Token refreshed successfully", authResponse);
     }
 
@@ -134,42 +110,20 @@ public class AuthService {
 
         if (!jwtService.validateToken(validationRequest.getToken())) {
             log.warn("Invalid token provided");
-            return new ApiResponse<>(false, "Invalid token",
-                    TokenValidationResponse.builder().valid(false).build());
+            TokenValidationResponse invalidResponse = authMapper.toInvalidTokenResponse("Invalid token");
+            return new ApiResponse<>(false, "Invalid token", invalidResponse);
         }
-
         String username = jwtService.getUsernameFromToken(validationRequest.getToken());
         Claims claims = jwtService.getClaimsFromToken(validationRequest.getToken());
-
         User user = userRepository.findByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
-
         if (!user.isEnabled()) {
             log.warn("Token is valid but user is disabled: {}", username);
-            return new ApiResponse<>(false, "User is disabled",
-                    TokenValidationResponse.builder().valid(false).build());
+            TokenValidationResponse disabledResponse = authMapper.toInvalidTokenResponse("User is disabled");
+            return new ApiResponse<>(false, "User is disabled", disabledResponse);
         }
-
-        Set<String> roles = user.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-
-        Map<String, Object> customClaims = new HashMap<>(claims);
-        customClaims.remove("sub");
-        customClaims.remove("iat");
-        customClaims.remove("exp");
-
-        TokenValidationResponse validationResponse = TokenValidationResponse.builder()
-                .valid(true)
-                .userId(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .roles(roles)
-                .claims(customClaims)
-                .build();
-
+        TokenValidationResponse validationResponse = authMapper.toTokenValidationResponse(user, claims, true);
         log.info("Token validated successfully for user: {}", username);
-
         return new ApiResponse<>(true, "Token is valid", validationResponse);
     }
 }

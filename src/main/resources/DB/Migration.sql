@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS roles (
 
 CREATE TABLE IF NOT EXISTS users (
                        id BIGSERIAL PRIMARY KEY,
-                       username VARCHAR(50) NOT NULL,
+                       username VARCHAR(50) NOT NULL UNIQUE,
                        email VARCHAR(255) NOT NULL UNIQUE,
                        password VARCHAR(255) NOT NULL,
                        enabled BOOLEAN NOT NULL DEFAULT false,
@@ -23,5 +23,3 @@ CREATE TABLE IF NOT EXISTS user_roles (
                             FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
-INSERT INTO roles (name) VALUES ('ROLE_USER');
-INSERT INTO roles (name) VALUES ('ROLE_ADMIN');

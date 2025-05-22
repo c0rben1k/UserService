@@ -56,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers(PathConstants.CSS, PathConstants.JS, PathConstants.IMAGES).permitAll()
                         .requestMatchers(PathConstants.ADMIN_DASHBOARD).hasAuthority(RoleConstants.ROLE_ADMIN)
                         .requestMatchers(PathConstants.DASHBOARD).authenticated()
+                        .requestMatchers(PathConstants.AUTH_REGISTER).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
