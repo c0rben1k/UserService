@@ -5,8 +5,10 @@
     <title>Authentication Success</title>
 </head>
 <body>
-<h1>You are successfully authenticated!</h1>
 <p>Welcome to the Task Management System.</p>
+<div th:if="${user != null}">
+    <p>Hello, <span th:text="${user.username}">username</span> (<span th:text="${user.email}">email</span>)!</p>
+</div>
 <a href="/auth/logout">Logout</a>
 </body>
 </html>

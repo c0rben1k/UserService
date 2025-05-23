@@ -1,6 +1,6 @@
 package by.algin.userservice.controller;
 
-import by.algin.userservice.DTO.response.UserResponse;
+import by.algin.userservice.dto.response.UserResponse;
 import by.algin.userservice.constants.PathConstants;
 import by.algin.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;

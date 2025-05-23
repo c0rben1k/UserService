@@ -1,8 +1,8 @@
 package by.algin.userservice.service;
 
-import by.algin.userservice.DTO.request.RegisterRequest;
-import by.algin.userservice.DTO.response.ApiResponse;
-import by.algin.userservice.DTO.response.UserResponse;
+import by.algin.userservice.dto.request.RegisterRequest;
+import by.algin.userservice.dto.response.ApiResponse;
+import by.algin.userservice.dto.response.UserResponse;
 import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.EmailAlreadyExistsException;
@@ -40,7 +40,7 @@ public class UserService {
     public ApiResponse<UserResponse> registerUser(RegisterRequest registerRequest) {
         log.info("Registering new user with username: {}", registerRequest.getUsername());
         validateRegistrationRequest(registerRequest);
-        Role userRole = roleRepository.findByName(RoleConstants.ROLE_USER)
+        Role userRole = roleRepository.findByName(RoleConstants.USER)
                 .orElseThrow(RoleNotFoundException::new);
         User user = userMapper.toUserEntity(registerRequest);
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));

@@ -2,12 +2,12 @@ package by.algin.userservice.service;
 
 import by.algin.userservice.exception.UserNotFoundException;
 import by.algin.userservice.exception.InvalidTokenException;
-import by.algin.userservice.DTO.request.LoginRequest;
-import by.algin.userservice.DTO.request.TokenRefreshRequest;
-import by.algin.userservice.DTO.request.TokenValidationRequest;
-import by.algin.userservice.DTO.response.ApiResponse;
-import by.algin.userservice.DTO.response.AuthResponse;
-import by.algin.userservice.DTO.response.TokenValidationResponse;
+import by.algin.userservice.dto.request.LoginRequest;
+import by.algin.userservice.dto.request.TokenRefreshRequest;
+import by.algin.userservice.dto.request.TokenValidationRequest;
+import by.algin.userservice.dto.response.ApiResponse;
+import by.algin.userservice.dto.response.AuthResponse;
+import by.algin.userservice.dto.response.TokenValidationResponse;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.AccountDisabledException;
 import by.algin.userservice.exception.InvalidCredentialsException;

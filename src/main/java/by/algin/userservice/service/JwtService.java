@@ -28,18 +28,18 @@ public class JwtService {
         org.springframework.security.core.userdetails.User userPrincipal =
                 (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
 
-        return generateToken(userPrincipal, appProperties.getSecurity().getJwt().getAccessTokenExpiration());
+        return generateToken(userPrincipal, appProperties.getSecurity().getAccessTokenExpiration());
     }
 
     public String generateRefreshToken(Authentication authentication) {
         org.springframework.security.core.userdetails.User userPrincipal =
                 (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
 
-        return generateToken(userPrincipal, appProperties.getSecurity().getJwt().getRefreshTokenExpiration());
+        return generateToken(userPrincipal, appProperties.getSecurity().getRefreshTokenExpiration());
     }
 
     public String generateAccessToken(User user) {
-        return generateToken(createClaims(user), user.getUsername(), appProperties.getSecurity().getJwt().getAccessTokenExpiration());
+        return generateToken(createClaims(user), user.getUsername(), appProperties.getSecurity().getAccessTokenExpiration());
     }
 
     private String generateToken(org.springframework.security.core.userdetails.User userPrincipal, long expiration) {
@@ -106,7 +106,7 @@ public class JwtService {
     }
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(appProperties.getSecurity().getJwt().getSecret());
+        byte[] keyBytes = Decoders.BASE64.decode(appProperties.getSecurity().getSecret());
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

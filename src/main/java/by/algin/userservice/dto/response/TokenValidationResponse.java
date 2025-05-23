@@ -1,22 +1,22 @@
-package by.algin.userservice.DTO.response;
+package by.algin.userservice.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.HashSet;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TokenValidationResponse {
-    private boolean valid;
+    private boolean isValid;
     private Long userId;
     private String username;
     private String email;
-    private Set<String> roles;
-    private Map<String, Object> claims;
+    private HashSet<String> roles;
+    private HashMap<String, Object> claims;
 }

@@ -1,4 +1,4 @@
-package by.algin.userservice.DTO.request;
+package by.algin.userservice.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

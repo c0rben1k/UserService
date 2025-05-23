@@ -1,54 +1,58 @@
 package by.algin.userservice.config;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
+
 
 @Data
 @Component
 @ConfigurationProperties(prefix = "app")
+@Validated
 public class AppProperties {
 
+    @Valid
+    @NotNull
     private final Security security = new Security();
+
+    @Valid
+    @NotNull
     private final Confirmation confirmation = new Confirmation();
+
+    @Valid
+    @NotNull
     private final Mail mail = new Mail();
 
     @Data
     public static class Security {
-        private final Jwt jwt = new Jwt();
+        @NotNull
+        private String secret;
 
-        @Data
-        public static class Jwt {
-            private String secret;
-            private long accessTokenExpiration;
-            private long refreshTokenExpiration;
-        }
+        @NotNull
+        private Long accessTokenExpiration;
+
+        @NotNull
+        private Long refreshTokenExpiration;
     }
 
     @Data
     public static class Confirmation {
-        private final Token token = new Token();
-        private String url;
+        @NotNull
+        private Integer expirationMinutes;
 
-        @Data
-        public static class Token {
-            private int expirationMinutes;
-        }
+        @NotNull
+        private String url;
     }
 
     @Data
     public static class Mail {
-        private final Subject subject = new Subject();
-        private final Body body = new Body();
+        @NotNull
+        private String registrationSubject;
 
-        @Data
-        public static class Subject {
-            private String registration;
-        }
-
-        @Data
-        public static class Body {
-            private String registration;
-        }
+        @NotNull
+        private String registrationBody;
     }
 }

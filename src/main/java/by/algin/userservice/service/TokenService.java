@@ -25,7 +25,7 @@ public class TokenService {
             return false;
         }
 
-        int expirationMinutes = appProperties.getConfirmation().getToken().getExpirationMinutes();
+        int expirationMinutes = appProperties.getConfirmation().getExpirationMinutes();
 
         LocalDateTime expirationTime = tokenCreationTime.plusMinutes(expirationMinutes);
         return LocalDateTime.now().isBefore(expirationTime);

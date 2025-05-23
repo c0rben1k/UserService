@@ -1,13 +1,13 @@
 package by.algin.userservice.controller;
 
-import by.algin.userservice.DTO.request.LoginRequest;
-import by.algin.userservice.DTO.request.RegisterRequest;
-import by.algin.userservice.DTO.request.TokenRefreshRequest;
-import by.algin.userservice.DTO.request.TokenValidationRequest;
-import by.algin.userservice.DTO.response.ApiResponse;
-import by.algin.userservice.DTO.response.AuthResponse;
-import by.algin.userservice.DTO.response.TokenValidationResponse;
-import by.algin.userservice.DTO.response.UserResponse;
+import by.algin.userservice.dto.request.LoginRequest;
+import by.algin.userservice.dto.request.RegisterRequest;
+import by.algin.userservice.dto.request.TokenRefreshRequest;
+import by.algin.userservice.dto.request.TokenValidationRequest;
+import by.algin.userservice.dto.response.ApiResponse;
+import by.algin.userservice.dto.response.AuthResponse;
+import by.algin.userservice.dto.response.TokenValidationResponse;
+import by.algin.userservice.dto.response.UserResponse;
 import by.algin.userservice.constants.PathConstants;
 import by.algin.userservice.exception.TokenExpiredException;
 import by.algin.userservice.service.AuthService;

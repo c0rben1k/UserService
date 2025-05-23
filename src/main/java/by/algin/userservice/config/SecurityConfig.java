@@ -51,12 +51,19 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PathConstants.ROOT).permitAll()
-                        .requestMatchers(PathConstants.AUTH_LOGIN, PathConstants.AUTH_LOGOUT).permitAll()
+                        .requestMatchers(
+                                PathConstants.ROOT,
+                                PathConstants.AUTH_LOGIN,
+                                PathConstants.AUTH_LOGOUT,
+                                PathConstants.AUTH_REGISTER,
+                                PathConstants.AUTH_REGISTRATION_SUCCESS,
+                                PathConstants.AUTH_CONFIRM,
+                                PathConstants.AUTH_TOKEN_EXPIRED,
+                                PathConstants.AUTH_RESEND_CONFIRMATION
+                        ).permitAll()
                         .requestMatchers(PathConstants.CSS, PathConstants.JS, PathConstants.IMAGES).permitAll()
-                        .requestMatchers(PathConstants.ADMIN_DASHBOARD).hasAuthority(RoleConstants.ROLE_ADMIN)
+                        .requestMatchers(PathConstants.ADMIN_DASHBOARD).hasAuthority(RoleConstants.ADMIN)
                         .requestMatchers(PathConstants.DASHBOARD).authenticated()
-                        .requestMatchers(PathConstants.AUTH_REGISTER).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

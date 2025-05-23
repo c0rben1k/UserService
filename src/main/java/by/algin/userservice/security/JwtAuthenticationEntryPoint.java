@@ -1,6 +1,6 @@
 package by.algin.userservice.security;
 
-import by.algin.userservice.DTO.response.ApiResponse;
+import by.algin.userservice.dto.response.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

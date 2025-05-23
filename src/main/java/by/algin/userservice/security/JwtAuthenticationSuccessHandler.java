@@ -22,6 +22,6 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
     private boolean isAdmin(Authentication authentication) {
         return authentication.getAuthorities().stream()
-                .anyMatch(auth -> RoleConstants.ROLE_ADMIN.equals(auth.getAuthority()));
+                .anyMatch(auth -> RoleConstants.ADMIN.equals(auth.getAuthority()));
     }
 }

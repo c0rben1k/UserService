@@ -1,6 +1,6 @@
 package by.algin.userservice.controller;
 
-import by.algin.userservice.DTO.request.RegisterRequest;
+import by.algin.userservice.dto.request.RegisterRequest;
 import by.algin.userservice.constants.PathConstants;
 import by.algin.userservice.exception.EmailAlreadyExistsException;
 import by.algin.userservice.exception.PasswordsDoNotMatchException;

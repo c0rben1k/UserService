@@ -4,6 +4,7 @@ import by.algin.userservice.entity.User;
 import by.algin.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import by.algin.userservice.exception.UserNotFoundException;
@@ -19,6 +20,7 @@ public class ConfirmationService {
     private final TokenService tokenService;
     private final EmailService emailService;
 
+    @Async
     @Transactional
     public void sendConfirmationEmail(User user) {
         emailService.sendConfirmationEmail(user.getEmail(), user.getConfirmationToken());

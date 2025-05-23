@@ -34,16 +34,16 @@ public class EmailService {
         String confirmationUrl = appProperties.getConfirmation().getUrl() + token;
 
         String subject = "Task Management System - Account Confirmation";
-        if (appProperties.getMail().getSubject().getRegistration() != null &&
-                !appProperties.getMail().getSubject().getRegistration().isEmpty()) {
-            subject = appProperties.getMail().getSubject().getRegistration();
+        if (appProperties.getMail().getRegistrationSubject() != null &&
+                !appProperties.getMail().getRegistrationSubject().isEmpty()) {
+            subject = appProperties.getMail().getRegistrationSubject();
         }
 
         String emailBody = "Thank you for registering with Task Management System. " +
                 "Please click on the link below to confirm your account:";
-        if (appProperties.getMail().getBody().getRegistration() != null &&
-                !appProperties.getMail().getBody().getRegistration().isEmpty()) {
-            emailBody = appProperties.getMail().getBody().getRegistration();
+        if (appProperties.getMail().getRegistrationBody() != null &&
+                !appProperties.getMail().getRegistrationBody().isEmpty()) {
+            emailBody = appProperties.getMail().getRegistrationBody();
         }
 
         String text = "Hello,\n\n" +

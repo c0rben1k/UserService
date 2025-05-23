@@ -1,4 +1,4 @@
-package by.algin.userservice.DTO.response;
+package by.algin.userservice.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
