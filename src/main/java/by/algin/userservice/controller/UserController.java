@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping(PathConstants.API_USERS)
@@ -17,24 +19,12 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/{id}")
+    @GetMapping("/search")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
-        log.info("Getting user with id: {}", id);
-        return ResponseEntity.ok(userService.getUserById(id));
-    }
-
-    @GetMapping("/by-username/{username}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
-        log.info("Getting user with username: {}", username);
-        return ResponseEntity.ok(userService.getUserByUsername(username));
-    }
-
-    @GetMapping("/by-email/{email}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserResponse> getUserByEmail(@PathVariable String email) {
-        log.info("Getting user with email: {}", email);
-        return ResponseEntity.ok(userService.getUserByEmail(email));
+    public ResponseEntity<List<UserResponse>> searchUsers(
+            @RequestParam("field") String field,
+            @RequestParam("value") String value) {
+        log.info("Searching users by field: {} with value: {}", field, value);
+        return ResponseEntity.ok(userService.searchUsers(field, value));
     }
 }

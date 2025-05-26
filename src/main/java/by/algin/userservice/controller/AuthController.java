@@ -55,15 +55,7 @@ public class AuthController {
     @GetMapping("/confirm")
     public ResponseEntity<ApiResponse<String>> confirmAccount(@RequestParam("token") String token) {
         log.info("Processing account confirmation with token");
-        try {
-            return ResponseEntity.ok(userService.confirmAccount(token));
-        } catch (TokenExpiredException e) {
-            return ResponseEntity.ok(new ApiResponse<>(
-                    false,
-                    "Token has expired. Please request a new one.",
-                    e.getEmail()
-            ));
-        }
+        return ResponseEntity.ok(userService.confirmAccount(token));
     }
 
     @PostMapping("/resend-confirmation")

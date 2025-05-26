@@ -70,6 +70,41 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<ApiResponse<String>> handleTokenExpiredException(TokenExpiredException ex) {
+        log.error("Token expired: {}", ex.getMessage(), ex);
+        ApiResponse<String> response = new ApiResponse<>(
+                false,
+                ErrorCode.EXPIRED_TOKEN.getMessage() + ". Please request a new one.",
+                ex.getEmail()
+        );
+        return ResponseEntity.status(ErrorCode.EXPIRED_TOKEN.getStatus()).body(response);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUserNotFoundException(UserNotFoundException ex) {
+        log.error("User not found: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ErrorCode.USER_NOT_FOUND);
+    }
+
+    @ExceptionHandler(InvalidEmailException.class)
+    public ResponseEntity<ApiResponse<Object>> handleInvalidEmailException(InvalidEmailException ex) {
+        log.error("Invalid email: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ErrorCode.INVALID_EMAIL);
+    }
+
+    @ExceptionHandler(AccountAlreadyConfirmedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAccountAlreadyConfirmedException(AccountAlreadyConfirmedException ex) {
+        log.error("Account already confirmed: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ErrorCode.ACCOUNT_ALREADY_CONFIRMED);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.error("Invalid argument: {}", ex.getMessage(), ex);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleAllExceptions(Exception ex) {
         log.error("Unexpected error: {}", ex.getMessage(), ex);

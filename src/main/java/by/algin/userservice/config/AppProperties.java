@@ -7,7 +7,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-
 @Data
 @Component
 @ConfigurationProperties(prefix = "app")
@@ -25,6 +24,14 @@ public class AppProperties {
     @Valid
     @NotNull
     private final Mail mail = new Mail();
+
+    @Valid
+    @NotNull
+    private final RememberMe rememberMe = new RememberMe();
+
+    @Valid
+    @NotNull
+    private final RateLimit rateLimit = new RateLimit();
 
     @Data
     public static class Security {
@@ -54,5 +61,30 @@ public class AppProperties {
 
         @NotNull
         private String registrationBody;
+    }
+
+    @Data
+    public static class RememberMe {
+        @NotNull
+        private String key;
+
+        @NotNull
+        private Integer tokenValiditySeconds;
+    }
+
+    @Data
+    public static class RateLimit {
+        @Valid
+        @NotNull
+        private final ResendConfirmation resendConfirmation = new ResendConfirmation();
+
+        @Data
+        public static class ResendConfirmation {
+            @NotNull
+            private Integer maxRequests;
+
+            @NotNull
+            private Long windowSeconds;
+        }
     }
 }

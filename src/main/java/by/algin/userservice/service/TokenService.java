@@ -6,8 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.Base64;
 
 @Slf4j
 @Service
@@ -15,9 +16,12 @@ import java.util.UUID;
 public class TokenService {
 
     private final AppProperties appProperties;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public String generateToken() {
-        return UUID.randomUUID().toString();
+        byte[] randomBytes = new byte[24];
+        secureRandom.nextBytes(randomBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 
     public boolean isTokenValid(LocalDateTime tokenCreationTime) {

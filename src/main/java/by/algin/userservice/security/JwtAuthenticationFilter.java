@@ -19,7 +19,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,38 +36,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
             String jwt = getJwtFromRequest(request);
-
             if (StringUtils.hasText(jwt) && jwtService.validateToken(jwt)) {
-                String username = jwtService.getUsernameFromToken(jwt);
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                String authorities = jwtService.getClaimsFromToken(jwt).get("authorities", String.class);
-
-                List<SimpleGrantedAuthority> grantedAuthorities = Arrays.stream(authorities.split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
-
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, grantedAuthorities);
-
+                UsernamePasswordAuthenticationToken authentication = getAuthenticationFromJwt(jwt);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
             log.error("Cannot set user authentication: {}", e.getMessage(), e);
         }
-
         filterChain.doFilter(request, response);
+    }
+
+    private UsernamePasswordAuthenticationToken getAuthenticationFromJwt(String jwt) {
+        String username = jwtService.getUsernameFromToken(jwt);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        @SuppressWarnings("unchecked")
+        List<String> authorities = (List<String>) jwtService.getClaimsFromToken(jwt).get("authorities");
+        List<SimpleGrantedAuthority> grantedAuthorities = authorities.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+        return new UsernamePasswordAuthenticationToken(userDetails, null, grantedAuthorities);
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-
         return null;
     }
 }

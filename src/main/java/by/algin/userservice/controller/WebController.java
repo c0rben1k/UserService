@@ -29,7 +29,7 @@ public class WebController {
         if (authentication != null && authentication.isAuthenticated()
                 && !authentication.getName().equals("anonymousUser")) {
             try {
-                UserResponse user = userService.getUserByUsername(authentication.getName());
+                UserResponse user = userService.getUserByField("username", authentication.getName());
                 model.addAttribute("user", user);
                 log.info("User {} accessed dashboard page", user.getUsername());
             } catch (Exception e) {

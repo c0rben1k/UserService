@@ -18,6 +18,9 @@ public enum ErrorCode {
     USERNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "Username already exists"),
     ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "Role not found"),
     PASSWORDS_DONT_MATCH(HttpStatus.BAD_REQUEST, "Passwords don't match"),
+    INVALID_EMAIL(HttpStatus.BAD_REQUEST, "Email cannot be null or empty"),
+    ACCOUNT_ALREADY_CONFIRMED(HttpStatus.BAD_REQUEST, "Account is already confirmed"),
+    RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "Rate limit exceeded"),
 
 
     EMAIL_SENDING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Error sending email"),
