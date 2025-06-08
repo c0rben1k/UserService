@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+</head>
+<body>
+<h1>Error</h1>
+
+<p th:text="${error}">Please check the link or try again later.</p>
+
+<a th:href="@{/}">Return to homepage</a>
+</body>
+</html>
