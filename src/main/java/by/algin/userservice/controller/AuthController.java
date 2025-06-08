@@ -1,15 +1,14 @@
 package by.algin.userservice.controller;
 
-import by.algin.userservice.dto.request.LoginRequest;
-import by.algin.userservice.dto.request.RegisterRequest;
-import by.algin.userservice.dto.request.TokenRefreshRequest;
-import by.algin.userservice.dto.request.TokenValidationRequest;
-import by.algin.userservice.dto.response.ApiResponse;
-import by.algin.userservice.dto.response.AuthResponse;
-import by.algin.userservice.dto.response.TokenValidationResponse;
-import by.algin.userservice.dto.response.UserResponse;
+import by.algin.dto.request.LoginRequest;
+import by.algin.dto.request.RegisterRequest;
+import by.algin.dto.request.TokenRefreshRequest;
+import by.algin.dto.request.TokenValidationRequest;
+import by.algin.dto.response.ApiResponse;
+import by.algin.dto.response.AuthResponse;
+import by.algin.dto.response.TokenValidationResponse;
+import by.algin.dto.response.UserResponse;
 import by.algin.userservice.constants.PathConstants;
-import by.algin.userservice.exception.TokenExpiredException;
 import by.algin.userservice.service.AuthService;
 import by.algin.userservice.service.UserService;
 import jakarta.validation.Valid;
@@ -20,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping(PathConstants.API_AUTH)
+@RequestMapping(PathConstants.API_AUTH_BASE)
 @RequiredArgsConstructor
 public class AuthController {
 

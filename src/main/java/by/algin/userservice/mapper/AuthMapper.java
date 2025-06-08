@@ -1,16 +1,18 @@
 package by.algin.userservice.mapper;
 
-import by.algin.userservice.dto.response.AuthResponse;
-import by.algin.userservice.dto.response.TokenValidationResponse;
+import by.algin.dto.response.AuthResponse;
+import by.algin.dto.response.TokenValidationResponse;
 import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class AuthMapper {
 
@@ -19,9 +21,16 @@ public class AuthMapper {
             return null;
         }
 
-        HashSet<String> roles = user.getRoles().stream()
+        log.info("User roles in mapper: {}", user.getRoles());
+        log.info("User roles size: {}", user.getRoles() != null ? user.getRoles().size() : "null");
+
+        HashSet<String> roles = user.getRoles() != null
+                ? user.getRoles().stream()
                 .map(Role::getName)
-                .collect(Collectors.toCollection(HashSet::new));
+                .collect(Collectors.toCollection(HashSet::new))
+                : new HashSet<>();
+
+        log.info("Mapped roles: {}", roles);
 
         return AuthResponse.builder()
                 .userId(user.getId())
@@ -35,13 +44,7 @@ public class AuthMapper {
     }
 
     public TokenValidationResponse toTokenValidationResponse(User user, Claims claims, boolean isValid) {
-        if (!isValid) {
-            return TokenValidationResponse.builder()
-                    .isValid(false)
-                    .build();
-        }
-
-        if (user == null) {
+        if (!isValid || user == null) {
             return TokenValidationResponse.builder()
                     .isValid(false)
                     .build();

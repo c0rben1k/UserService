@@ -1,6 +1,7 @@
 package by.algin.userservice.service;
 
 import by.algin.userservice.config.AppProperties;
+import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -9,12 +10,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,46 +26,31 @@ public class JwtService {
     private final AppProperties appProperties;
 
     public String generateAccessToken(Authentication authentication) {
-        org.springframework.security.core.userdetails.User userPrincipal =
-                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-
-        return generateToken(userPrincipal, appProperties.getSecurity().getAccessTokenExpiration());
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet()));
+        return generateToken(claims, userPrincipal.getUsername(), appProperties.getSecurity().getAccessTokenExpiration());
     }
 
     public String generateRefreshToken(Authentication authentication) {
-        org.springframework.security.core.userdetails.User userPrincipal =
-                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-
-        return generateToken(userPrincipal, appProperties.getSecurity().getRefreshTokenExpiration());
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        return generateToken(new HashMap<>(), userPrincipal.getUsername(), appProperties.getSecurity().getRefreshTokenExpiration());
     }
 
     public String generateAccessToken(User user) {
-        return generateToken(createClaims(user), user.getUsername(), appProperties.getSecurity().getAccessTokenExpiration());
-    }
-
-    private String generateToken(org.springframework.security.core.userdetails.User userPrincipal, long expiration) {
-        Map<String, Object> claims = new HashMap<>();
-
-        String authorities = userPrincipal.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
-
-        claims.put("authorities", authorities);
-
-        return generateToken(claims, userPrincipal.getUsername(), expiration);
+        Map<String, Object> claims = createClaims(user);
+        return generateToken(claims, user.getUsername(), appProperties.getSecurity().getAccessTokenExpiration());
     }
 
     private Map<String, Object> createClaims(User user) {
         Map<String, Object> claims = new HashMap<>();
-
-        String authorities = user.getRoles().stream()
-                .map(role -> role.getName())
-                .collect(Collectors.joining(","));
-
-        claims.put("authorities", authorities);
+        claims.put("roles", user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet()));
         claims.put("userId", user.getId());
         claims.put("email", user.getEmail());
-
         return claims;
     }
 
@@ -88,16 +74,25 @@ public class JwtService {
         }
     }
 
-    public String getUsernameFromToken(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+    public boolean validateToken(String token, UserDetails userDetails) {
+        final String username = getUsernameFromToken(token);
+        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && userDetails.isEnabled();
     }
 
-    public Claims getClaimsFromToken(String token) {
+    private boolean isTokenExpired(String token) {
+        return getExpirationDateFromToken(token).before(new Date());
+    }
+
+    public Date getExpirationDateFromToken(String token) {
+        return getClaimFromToken(token, Claims::getExpiration);
+    }
+
+    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = getAllClaimsFromToken(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public Claims getAllClaimsFromToken(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
@@ -105,8 +100,13 @@ public class JwtService {
                 .getPayload();
     }
 
+    public String getUsernameFromToken(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
+    }
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(appProperties.getSecurity().getSecret());
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
 }

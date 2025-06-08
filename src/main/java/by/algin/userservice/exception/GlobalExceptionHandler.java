@@ -1,6 +1,6 @@
 package by.algin.userservice.exception;
 
-import by.algin.userservice.dto.response.ApiResponse;
+import by.algin.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;

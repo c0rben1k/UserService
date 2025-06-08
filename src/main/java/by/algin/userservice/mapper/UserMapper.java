@@ -1,9 +1,13 @@
 package by.algin.userservice.mapper;
 
-import by.algin.userservice.dto.request.RegisterRequest;
-import by.algin.userservice.dto.response.UserResponse;
+import by.algin.dto.request.RegisterRequest;
+import by.algin.dto.response.UserResponse;
+import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import org.springframework.stereotype.Component;
+
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
@@ -16,6 +20,9 @@ public class UserMapper {
         return UserResponse.builder()
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .roles(user.getRoles() != null
+                        ? (HashSet<String>) user.getRoles().stream().map(Role::getName).collect(Collectors.toSet())
+                        : new HashSet<>())
                 .build();
     }
 

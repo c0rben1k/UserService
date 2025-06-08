@@ -1,12 +1,13 @@
 package by.algin.userservice.service;
 
-import by.algin.userservice.dto.request.RegisterRequest;
-import by.algin.userservice.dto.response.ApiResponse;
-import by.algin.userservice.dto.response.UserResponse;
+import by.algin.dto.request.RegisterRequest;
+import by.algin.dto.response.ApiResponse;
+import by.algin.dto.response.UserResponse;
 import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.UserNotFoundException;
 import by.algin.userservice.exception.RoleNotFoundException;
+import by.algin.userservice.mapper.AuthMapper;
 import by.algin.userservice.mapper.UserMapper;
 import by.algin.userservice.constants.RoleConstants;
 import by.algin.userservice.repository.RoleRepository;
@@ -22,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -35,6 +35,8 @@ public class UserService {
     private final TokenService tokenService;
     private final ConfirmationService confirmationService;
     private final UserMapper userMapper;
+    private final AuthMapper authMapper;
+    private final JwtService jwtService;
     private final RateLimiter rateLimiter;
     private final UserValidator userValidator;
 
@@ -102,15 +104,4 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
-    public List<UserResponse> searchUsers(String field, String value) {
-        log.info("Searching users by field: {} with value: {}", field, value);
-        try {
-            UserResponse user = getUserByField(field, value);
-            return Collections.singletonList(user);
-        } catch (UserNotFoundException e) {
-            throw e;
-        } catch (IllegalArgumentException e) {
-            throw e;
-        }
-    }
 }

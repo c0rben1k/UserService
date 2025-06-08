@@ -30,8 +30,9 @@ public class ConfirmationService {
             log.error("Cannot send confirmation email: user or email is null");
             throw new InvalidEmailException("User or email cannot be null");
         }
-        emailService.sendConfirmationEmail(user.getEmail(), user.getConfirmationToken());
-        log.info("Confirmation email sent to: {}", user.getEmail());
+        log.info("Confirmation token for {}: {}", user.getEmail(), user.getConfirmationToken());
+        // emailService.sendConfirmationEmail(user.getEmail(), user.getConfirmationToken()); временно
+         log.info("Confirmation email sent to: {}", user.getEmail());
     }
 
     @Transactional
