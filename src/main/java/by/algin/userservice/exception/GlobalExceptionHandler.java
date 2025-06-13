@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
         ApiResponse<String> response = new ApiResponse<>(
                 false,
                 ErrorCode.EXPIRED_TOKEN.getMessage() + ". Please request a new one.",
-                ex.getEmail()
+                ex.getMessage()
         );
         return ResponseEntity.status(ErrorCode.EXPIRED_TOKEN.getStatus()).body(response);
     }

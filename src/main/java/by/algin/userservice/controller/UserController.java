@@ -16,8 +16,8 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/search")
-    public ApiResponse<UserResponse> searchUsers(@RequestParam String field, @RequestParam String value) {
-        return new ApiResponse<>(true, "User found", userService.getUserByField(field, value));
+    @GetMapping(PathConstants.API_USERS_SEARCH)
+    public ApiResponse<UserResponse> getUserByField(@RequestParam String field, @RequestParam String value) {
+        return userService.getUserByField(field, value);
     }
 }

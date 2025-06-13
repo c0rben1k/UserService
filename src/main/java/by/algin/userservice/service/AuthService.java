@@ -24,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -62,14 +63,20 @@ public class AuthService {
     public ApiResponse<AuthResponse> refreshToken(TokenRefreshRequest refreshRequest) {
         log.info("Processing token refresh request");
 
-        validateRefreshToken(refreshRequest.getRefreshToken());
+        String refreshToken = refreshRequest.getRefreshToken();
+        if (!StringUtils.hasText(refreshToken)) {
+            log.error("Refresh token is null or empty");
+            throw new InvalidTokenException("Refresh token cannot be null or empty");
+        }
 
-        String username = jwtService.getUsernameFromToken(refreshRequest.getRefreshToken());
+        validateRefreshToken(refreshToken);
+
+        String username = jwtService.getUsernameFromToken(refreshToken);
         User user = findUserByUsername(username);
 
         validateUserAccount(user);
 
-        AuthResponse authResponse = createRefreshAuthResponse(user, refreshRequest.getRefreshToken());
+        AuthResponse authResponse = createRefreshAuthResponse(user, refreshToken);
 
         log.info("Token refreshed successfully for user: {}", user.getUsername());
         return new ApiResponse<>(true, "Token refreshed successfully", authResponse);
@@ -127,7 +134,13 @@ public class AuthService {
 
     private void validateRefreshToken(String refreshToken) {
         if (!jwtService.validateToken(refreshToken)) {
-            throw new InvalidTokenException();
+            log.error("Invalid refresh token format or signature");
+            throw new InvalidTokenException("Invalid refresh token format or signature");
+        }
+
+        if (!jwtService.isRefreshToken(refreshToken)) {
+            log.error("Token is not a refresh token");
+            throw new InvalidTokenException("Token is not a refresh token");
         }
     }
 
@@ -142,7 +155,7 @@ public class AuthService {
     private AuthResponse createAuthResponse(Authentication authentication, User user) {
         String accessToken = jwtService.generateAccessToken(authentication);
         String refreshToken = jwtService.generateRefreshToken(authentication);
-        Long expiresIn = jwtService.getAllClaimsFromToken(accessToken).getExpiration().getTime();
+        Long expiresIn = jwtService.getAllClaimsFromToken(accessToken).getExpiration().getTime() / 1000;
 
         AuthResponse authResponse = authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
         log.info("AuthResponse roles: {}", authResponse.getRoles());
@@ -152,7 +165,7 @@ public class AuthService {
 
     private AuthResponse createRefreshAuthResponse(User user, String refreshToken) {
         String accessToken = jwtService.generateAccessToken(user);
-        Long expiresIn = jwtService.getAllClaimsFromToken(accessToken).getExpiration().getTime();
+        Long expiresIn = jwtService.getAllClaimsFromToken(accessToken).getExpiration().getTime() / 1000;
 
         return authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
     }

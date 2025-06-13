@@ -60,10 +60,10 @@ public class ConfirmationService {
     public void confirmAccount(String token) {
         if (!StringUtils.hasText(token)) {
             log.error("Cannot confirm account: token is null or empty");
-            throw new InvalidTokenException();
+            throw new InvalidTokenException("Token cannot be null or empty");
         }
         User user = userRepository.findByConfirmationToken(token)
-                .orElseThrow(InvalidTokenException::new);
+                .orElseThrow(() -> new InvalidTokenException("Invalid confirmation token"));
 
         if (!StringUtils.hasText(user.getEmail())) {
             log.error("Cannot confirm account: user email is null for token {}", token);

@@ -7,7 +7,6 @@ import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.UserNotFoundException;
 import by.algin.userservice.exception.RoleNotFoundException;
-import by.algin.userservice.mapper.AuthMapper;
 import by.algin.userservice.mapper.UserMapper;
 import by.algin.userservice.constants.RoleConstants;
 import by.algin.userservice.repository.RoleRepository;
@@ -35,8 +34,6 @@ public class UserService {
     private final TokenService tokenService;
     private final ConfirmationService confirmationService;
     private final UserMapper userMapper;
-    private final AuthMapper authMapper;
-    private final JwtService jwtService;
     private final RateLimiter rateLimiter;
     private final UserValidator userValidator;
 
@@ -75,7 +72,7 @@ public class UserService {
         confirmationService.resendConfirmationToken(email);
     }
 
-    public UserResponse getUserByField(String field, String value) {
+    public ApiResponse<UserResponse> getUserByField(String field, String value) {
         log.info("Getting user by field: {} with value: {}", field, value);
 
         User user;
@@ -101,7 +98,7 @@ public class UserService {
                 throw new IllegalArgumentException("Invalid search field: " + field + ". Use 'id', 'username', or 'email'.");
         }
 
-        return userMapper.toUserResponse(user);
+        return new ApiResponse<>(true, "User found", userMapper.toUserResponse(user));
     }
 
 }

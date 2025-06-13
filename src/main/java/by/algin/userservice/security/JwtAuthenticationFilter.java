@@ -1,6 +1,8 @@
 package by.algin.userservice.security;
 
+import by.algin.userservice.exception.JwtAuthenticationException;
 import by.algin.userservice.service.JwtService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +15,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -25,35 +26,53 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final JwtAuthenticationEntryPoint unauthorizedHandler;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
-        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            String username = jwtService.getUsernameFromToken(token);
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String username;
 
-            log.debug("Processing token for username: {}", username);
-
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                if (jwtService.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.debug("Authentication successful for username: {}", username);
-                } else {
-                    log.warn("Invalid JWT token for username: {}. Token: {}", username, token);
-                }
-            } else {
-                log.debug("No authentication or username null for token: {}", token);
-            }
-        } else {
-            log.debug("No valid Authorization header found in request to: {}", request.getRequestURI());
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
-        chain.doFilter(request, response);
+
+        jwt = authHeader.substring(7);
+        try {
+            username = jwtService.getUsernameFromToken(jwt);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                if (jwtService.validateToken(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+        } catch (JwtException e) {
+            log.error("JWT token validation failed: {}", e.getMessage());
+            handleAuthenticationException(request, response, e);
+            return;
+        }
+
+        filterChain.doFilter(request, response);
     }
 
+    private void handleAuthenticationException(HttpServletRequest request, HttpServletResponse response, Exception e) throws IOException {
+        log.error("Authentication error: {}", e.getMessage());
+        unauthorizedHandler.commence(
+                request,
+                response,
+                new JwtAuthenticationException("JWT authentication failed: " + e.getMessage(), e)
+        );
+    }
 }

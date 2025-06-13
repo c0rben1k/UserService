@@ -20,9 +20,11 @@ public class UserMapper {
         return UserResponse.builder()
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .roles(user.getRoles() != null
-                        ? (HashSet<String>) user.getRoles().stream().map(Role::getName).collect(Collectors.toSet())
-                        : new HashSet<>())
+                .roles(user.getRoles() != null ?
+                        user.getRoles().stream()
+                                .map(Role::getName)
+                                .collect(Collectors.toCollection(HashSet::new)) :
+                        new HashSet<>())
                 .build();
     }
 
@@ -34,8 +36,6 @@ public class UserMapper {
         return User.builder()
                 .username(registerRequest.getUsername())
                 .email(registerRequest.getEmail())
-                .password(registerRequest.getPassword())
-                .enabled(false)
                 .build();
     }
 }

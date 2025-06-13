@@ -41,3 +41,4 @@ src/main/resources/DB/sql.sql
 src/main/resources/application.properties
 src/test/java/by/algin/userservice/UserServiceApplicationTests.java
 pom.xml
+README.md

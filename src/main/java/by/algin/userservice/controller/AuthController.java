@@ -26,38 +26,38 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
 
-    @PostMapping("/register")
+    @PostMapping(PathConstants.API_AUTH_REGISTER)
     public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         log.info("Processing registration request for: {}", registerRequest.getUsername());
         return ResponseEntity.ok(userService.registerUser(registerRequest));
     }
 
-    @PostMapping("/login")
+    @PostMapping(PathConstants.API_AUTH_LOGIN)
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         log.info("Processing login request for: {}", loginRequest.getUsernameOrEmail());
         return ResponseEntity.ok(authService.login(loginRequest));
     }
 
-    @PostMapping("/refresh-token")
+    @PostMapping(PathConstants.API_AUTH_REFRESH_TOKEN)
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         log.info("Processing token refresh request");
         return ResponseEntity.ok(authService.refreshToken(request));
     }
 
-    @PostMapping("/validate-token")
+    @PostMapping(PathConstants.API_AUTH_VALIDATE_TOKEN)
     public ResponseEntity<ApiResponse<TokenValidationResponse>> validateToken(
             @Valid @RequestBody TokenValidationRequest request) {
         log.info("Processing token validation request");
         return ResponseEntity.ok(authService.validateToken(request));
     }
 
-    @GetMapping("/confirm")
+    @GetMapping(PathConstants.API_AUTH_CONFIRM)
     public ResponseEntity<ApiResponse<String>> confirmAccount(@RequestParam("token") String token) {
         log.info("Processing account confirmation with token");
         return ResponseEntity.ok(userService.confirmAccount(token));
     }
 
-    @PostMapping("/resend-confirmation")
+    @PostMapping(PathConstants.API_AUTH_RESEND_CONFIRMATION)
     public ResponseEntity<ApiResponse<String>> resendConfirmation(@RequestParam("email") String email) {
         log.info("Processing resend confirmation request for: {}", email);
         userService.resendConfirmationToken(email);
