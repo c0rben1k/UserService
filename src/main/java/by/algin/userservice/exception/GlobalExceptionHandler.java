@@ -1,6 +1,6 @@
 package by.algin.userservice.exception;
 
-import by.algin.userservice.dto.response.ApiResponse;
+import by.algin.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
         ApiResponse<String> response = new ApiResponse<>(
                 false,
                 ErrorCode.EXPIRED_TOKEN.getMessage() + ". Please request a new one.",
-                ex.getEmail()
+                ex.getMessage()
         );
         return ResponseEntity.status(ErrorCode.EXPIRED_TOKEN.getStatus()).body(response);
     }
