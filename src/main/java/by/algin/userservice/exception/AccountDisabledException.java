@@ -9,14 +9,15 @@ import lombok.Getter;
 @ResponseStatus(HttpStatus.FORBIDDEN)
 public class AccountDisabledException extends ApiException {
     public AccountDisabledException() {
-        super(ErrorCode.ACCOUNT_DISABLED, "Account is disabled");
+        super(ErrorCode.ACCOUNT_DISABLED);
     }
 
     public AccountDisabledException(String details) {
         super(ErrorCode.ACCOUNT_DISABLED, details);
     }
+
     public AccountDisabledException(String message, Throwable cause) {
-        super(ErrorCode.ACCOUNT_DISABLED, message);
+        this(message);
         initCause(cause);
     }
 }

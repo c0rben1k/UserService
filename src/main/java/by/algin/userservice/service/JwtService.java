@@ -1,7 +1,7 @@
 package by.algin.userservice.service;
 
 import by.algin.userservice.config.AppProperties;
-import by.algin.userservice.entity.Role;
+import by.algin.userservice.constants.MessageConstants;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.InvalidTokenException;
 import by.algin.userservice.exception.TokenExpiredException;
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,37 +46,31 @@ public class JwtService {
     private Long refreshTokenExpiration;
 
     public String generateAccessToken(Authentication authentication) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
-        return generateToken(claims, authentication.getName(), accessTokenExpiration);
+        return generateAccessToken(authentication.getName());
     }
 
     public String generateRefreshToken(Authentication authentication) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE);
-        return generateToken(claims, authentication.getName(), refreshTokenExpiration);
+        return generateRefreshToken(authentication.getName());
     }
 
     public String generateAccessToken(User user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
-        return generateToken(claims, user.getUsername(), accessTokenExpiration);
+        return generateAccessToken(user.getUsername());
     }
 
     public String generateRefreshToken(User user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE);
-        return generateToken(claims, user.getUsername(), refreshTokenExpiration);
+        return generateRefreshToken(user.getUsername());
     }
 
-    private Map<String, Object> createClaims(User user) {
+    private String generateAccessToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", user.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet()));
-        claims.put("userId", user.getId());
-        claims.put("email", user.getEmail());
-        return claims;
+        claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
+        return generateToken(claims, username, accessTokenExpiration);
+    }
+
+    private String generateRefreshToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE);
+        return generateToken(claims, username, refreshTokenExpiration);
     }
 
     private String generateToken(Map<String, Object> claims, String subject, long expiration) {
@@ -98,31 +91,38 @@ public class JwtService {
                     .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
-            log.error("JWT token is expired: {}", e.getMessage());
-            throw new TokenExpiredException("Token has expired");
+            log.error(MessageConstants.JWT_TOKEN_EXPIRED, e.getMessage());
+            throw new TokenExpiredException(MessageConstants.TOKEN_HAS_EXPIRED);
         } catch (SignatureException e) {
-            log.error("Invalid JWT signature: {}", e.getMessage());
-            throw new InvalidTokenException("Invalid token signature");
+            log.error(MessageConstants.INVALID_JWT_SIGNATURE, e.getMessage());
+            throw new InvalidTokenException(MessageConstants.INVALID_TOKEN_SIGNATURE);
         } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token format: {}", e.getMessage());
-            throw new InvalidTokenException("Invalid token format");
+            log.error(MessageConstants.INVALID_JWT_FORMAT, e.getMessage());
+            throw new InvalidTokenException(MessageConstants.INVALID_TOKEN_FORMAT);
         } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT token: {}", e.getMessage());
-            throw new InvalidTokenException("Unsupported token type");
+            log.error(MessageConstants.UNSUPPORTED_JWT_TOKEN, e.getMessage());
+            throw new InvalidTokenException(MessageConstants.UNSUPPORTED_TOKEN_TYPE);
         } catch (Exception e) {
-            log.error("JWT token validation failed: {}", e.getMessage());
-            throw new InvalidTokenException("Token validation failed");
+            log.error(MessageConstants.JWT_VALIDATION_FAILED, e.getMessage());
+            throw new InvalidTokenException(MessageConstants.TOKEN_VALIDATION_FAILED);
         }
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && userDetails.isEnabled();
+        try {
+            Claims claims = getAllClaimsFromToken(token);
+            final String username = claims.getSubject();
+            final Date expiration = claims.getExpiration();
+
+            return (username.equals(userDetails.getUsername()))
+                && !expiration.before(new Date())
+                && userDetails.isEnabled();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    private boolean isTokenExpired(String token) {
-        return getExpirationDateFromToken(token).before(new Date());
-    }
+
 
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
@@ -145,12 +145,33 @@ public class JwtService {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
+    public String getUsernameFromClaims(Claims claims) {
+        return claims.getSubject();
+    }
+
+    public Date getExpirationFromClaims(Claims claims) {
+        return claims.getExpiration();
+    }
+
+    public boolean isTokenExpired(Claims claims) {
+        return claims.getExpiration().before(new Date());
+    }
+
     public Boolean isRefreshToken(String token) {
         try {
             Claims claims = getAllClaimsFromToken(token);
             return REFRESH_TOKEN_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM, String.class));
         } catch (Exception e) {
-            log.error("Failed to check token type: {}", e.getMessage());
+            log.error(MessageConstants.FAILED_TO_CHECK_TOKEN_TYPE, e.getMessage());
+            return false;
+        }
+    }
+
+    public Boolean isRefreshToken(Claims claims) {
+        try {
+            return REFRESH_TOKEN_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM, String.class));
+        } catch (Exception e) {
+            log.error(MessageConstants.FAILED_TO_CHECK_TOKEN_TYPE, e.getMessage());
             return false;
         }
     }

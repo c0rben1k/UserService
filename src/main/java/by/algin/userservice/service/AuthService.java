@@ -6,6 +6,7 @@ import by.algin.dto.request.TokenValidationRequest;
 import by.algin.dto.response.ApiResponse;
 import by.algin.dto.response.AuthResponse;
 import by.algin.dto.response.TokenValidationResponse;
+import by.algin.userservice.constants.MessageConstants;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.AccountDisabledException;
 import by.algin.userservice.exception.InvalidCredentialsException;
@@ -37,36 +38,35 @@ public class AuthService {
     private final AuthMapper authMapper;
 
     public ApiResponse<AuthResponse> login(LoginRequest loginRequest) {
-        log.info("Processing login request for user: {}", loginRequest.getUsernameOrEmail());
+        log.info(MessageConstants.PROCESSING_LOGIN_REQUEST, loginRequest.getUsernameOrEmail());
 
         try {
-            Authentication authentication = authenticateUser(loginRequest);
-            User user = findUserByAuthentication(authentication);
+            User user = authenticateAndGetUser(loginRequest);
 
             validateUserAccount(user);
             logUserRoles(user);
 
-            AuthResponse authResponse = createAuthResponse(authentication, user);
+            AuthResponse authResponse = createAuthResponse(user);
 
-            log.info("Login successful for user: {}", user.getUsername());
-            return new ApiResponse<>(true, "Login successful", authResponse);
+            log.info(MessageConstants.LOGIN_SUCCESSFUL_FOR_USER, user.getUsername());
+            return new ApiResponse<>(true, MessageConstants.LOGIN_SUCCESSFUL, authResponse);
 
         } catch (BadCredentialsException e) {
-            log.error("Invalid credentials for user: {}", loginRequest.getUsernameOrEmail());
+            log.error(MessageConstants.INVALID_CREDENTIALS_FOR_USER, loginRequest.getUsernameOrEmail());
             throw new InvalidCredentialsException();
         } catch (DisabledException e) {
-            log.error("Account disabled for user: {}", loginRequest.getUsernameOrEmail());
+            log.error(MessageConstants.ACCOUNT_DISABLED_FOR_USER, loginRequest.getUsernameOrEmail());
             throw new AccountDisabledException();
         }
     }
 
     public ApiResponse<AuthResponse> refreshToken(TokenRefreshRequest refreshRequest) {
-        log.info("Processing token refresh request");
+        log.info(MessageConstants.PROCESSING_TOKEN_REFRESH);
 
         String refreshToken = refreshRequest.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) {
-            log.error("Refresh token is null or empty");
-            throw new InvalidTokenException("Refresh token cannot be null or empty");
+            log.error(MessageConstants.REFRESH_TOKEN_NULL_OR_EMPTY_LOG);
+            throw new InvalidTokenException(MessageConstants.REFRESH_TOKEN_NULL_OR_EMPTY);
         }
 
         validateRefreshToken(refreshToken);
@@ -78,33 +78,39 @@ public class AuthService {
 
         AuthResponse authResponse = createRefreshAuthResponse(user, refreshToken);
 
-        log.info("Token refreshed successfully for user: {}", user.getUsername());
-        return new ApiResponse<>(true, "Token refreshed successfully", authResponse);
+        log.info(MessageConstants.TOKEN_REFRESHED_FOR_USER, user.getUsername());
+        return new ApiResponse<>(true, MessageConstants.TOKEN_REFRESHED_SUCCESSFULLY, authResponse);
     }
 
     public ApiResponse<TokenValidationResponse> validateToken(TokenValidationRequest validationRequest) {
-        log.info("Processing token validation request");
+        log.info(MessageConstants.PROCESSING_TOKEN_VALIDATION);
 
-        if (!jwtService.validateToken(validationRequest.getToken())) {
-            log.warn("Invalid token provided");
-            return createInvalidTokenResponse("Invalid token");
+        try {
+            Claims claims = jwtService.getAllClaimsFromToken(validationRequest.getToken());
+            String username = jwtService.getUsernameFromClaims(claims);
+
+            if (jwtService.isTokenExpired(claims)) {
+                log.warn(MessageConstants.INVALID_TOKEN_PROVIDED);
+                return createInvalidTokenResponse(MessageConstants.INVALID_TOKEN);
+            }
+
+            User user = findUserByUsername(username);
+
+            if (!user.isEnabled()) {
+                log.warn(MessageConstants.TOKEN_VALID_USER_DISABLED, username);
+                return createInvalidTokenResponse(MessageConstants.USER_IS_DISABLED);
+            }
+
+            TokenValidationResponse validationResponse = authMapper.toTokenValidationResponse(user, claims, true);
+            log.info(MessageConstants.TOKEN_VALIDATED_FOR_USER, username);
+            return new ApiResponse<>(true, MessageConstants.TOKEN_IS_VALID, validationResponse);
+        } catch (Exception e) {
+            log.warn(MessageConstants.INVALID_TOKEN_PROVIDED);
+            return createInvalidTokenResponse(MessageConstants.INVALID_TOKEN);
         }
-
-        String username = jwtService.getUsernameFromToken(validationRequest.getToken());
-        Claims claims = jwtService.getAllClaimsFromToken(validationRequest.getToken());
-        User user = findUserByUsername(username);
-
-        if (!user.isEnabled()) {
-            log.warn("Token is valid but user is disabled: {}", username);
-            return createInvalidTokenResponse("User is disabled");
-        }
-
-        TokenValidationResponse validationResponse = authMapper.toTokenValidationResponse(user, claims, true);
-        log.info("Token validated successfully for user: {}", username);
-        return new ApiResponse<>(true, "Token is valid", validationResponse);
     }
 
-    private Authentication authenticateUser(LoginRequest loginRequest) {
+    private User authenticateAndGetUser(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsernameOrEmail(),
@@ -112,10 +118,7 @@ public class AuthService {
                 )
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return authentication;
-    }
 
-    private User findUserByAuthentication(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         return userRepository.findByUsernameOrEmail(userDetails.getUsername(), userDetails.getUsername())
                 .orElseThrow(UserNotFoundException::new);
@@ -133,39 +136,51 @@ public class AuthService {
     }
 
     private void validateRefreshToken(String refreshToken) {
-        if (!jwtService.validateToken(refreshToken)) {
-            log.error("Invalid refresh token format or signature");
-            throw new InvalidTokenException("Invalid refresh token format or signature");
-        }
+        try {
+            Claims claims = jwtService.getAllClaimsFromToken(refreshToken);
 
-        if (!jwtService.isRefreshToken(refreshToken)) {
-            log.error("Token is not a refresh token");
-            throw new InvalidTokenException("Token is not a refresh token");
+            if (jwtService.isTokenExpired(claims)) {
+                log.error(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT_LOG);
+                throw new InvalidTokenException(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT);
+            }
+
+            if (!jwtService.isRefreshToken(claims)) {
+                log.error(MessageConstants.TOKEN_NOT_REFRESH_TOKEN_LOG);
+                throw new InvalidTokenException(MessageConstants.TOKEN_NOT_REFRESH_TOKEN);
+            }
+        } catch (InvalidTokenException e) {
+            throw e; 
+        } catch (Exception e) {
+            log.error(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT_LOG);
+            throw new InvalidTokenException(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT);
         }
     }
 
     private void logUserRoles(User user) {
-        log.info("User found: {}", user.getUsername());
-        log.info("User roles before mapping: {}", user.getRoles());
+        log.info(MessageConstants.USER_FOUND, user.getUsername());
+        log.info(MessageConstants.USER_ROLES_BEFORE_MAPPING, user.getRoles());
         if (user.getRoles() != null) {
-            user.getRoles().forEach(role -> log.info("Role: {}", role.getName()));
+            user.getRoles().forEach(role -> log.info(MessageConstants.ROLE_LOG, role.getName()));
         }
     }
 
-    private AuthResponse createAuthResponse(Authentication authentication, User user) {
-        String accessToken = jwtService.generateAccessToken(authentication);
-        String refreshToken = jwtService.generateRefreshToken(authentication);
-        Long expiresIn = jwtService.getAllClaimsFromToken(accessToken).getExpiration().getTime() / 1000;
+    private AuthResponse createAuthResponse(User user) {
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        Claims accessTokenClaims = jwtService.getAllClaimsFromToken(accessToken);
+        Long expiresIn = accessTokenClaims.getExpiration().getTime() / 1000;
 
         AuthResponse authResponse = authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
-        log.info("AuthResponse roles: {}", authResponse.getRoles());
+        log.info(MessageConstants.AUTH_RESPONSE_ROLES, authResponse.getRoles());
 
         return authResponse;
     }
 
     private AuthResponse createRefreshAuthResponse(User user, String refreshToken) {
         String accessToken = jwtService.generateAccessToken(user);
-        Long expiresIn = jwtService.getAllClaimsFromToken(accessToken).getExpiration().getTime() / 1000;
+
+        Claims accessTokenClaims = jwtService.getAllClaimsFromToken(accessToken);
+        Long expiresIn = accessTokenClaims.getExpiration().getTime() / 1000;
 
         return authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
     }

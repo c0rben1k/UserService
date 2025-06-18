@@ -1,5 +1,6 @@
 package by.algin.userservice.service;
 
+import by.algin.userservice.constants.MessageConstants;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.repository.UserRepository;
 import by.algin.userservice.exception.InvalidEmailException;
@@ -27,19 +28,19 @@ public class ConfirmationService {
     @Transactional
     public void sendConfirmationEmail(User user) {
         if (user == null || !StringUtils.hasText(user.getEmail())) {
-            log.error("Cannot send confirmation email: user or email is null");
-            throw new InvalidEmailException("User or email cannot be null");
+            log.error(MessageConstants.CANNOT_SEND_EMAIL_USER_NULL);
+            throw new InvalidEmailException(MessageConstants.USER_OR_EMAIL_NULL);
         }
-        log.info("Confirmation token for {}: {}", user.getEmail(), user.getConfirmationToken());
+        log.info(MessageConstants.CONFIRMATION_TOKEN_FOR_EMAIL, user.getEmail(), user.getConfirmationToken());
         // emailService.sendConfirmationEmail(user.getEmail(), user.getConfirmationToken()); временно
-         log.info("Confirmation email sent to: {}", user.getEmail());
+         log.info(MessageConstants.CONFIRMATION_EMAIL_SENT_TO_LOG, user.getEmail());
     }
 
     @Transactional
     public void resendConfirmationToken(String email) {
         if (!StringUtils.hasText(email)) {
-            log.error("Cannot resend confirmation token: email is null or empty");
-            throw new InvalidEmailException("Email cannot be null or empty");
+            log.error(MessageConstants.CANNOT_RESEND_TOKEN_EMAIL_NULL);
+            throw new InvalidEmailException(MessageConstants.EMAIL_NULL_OR_EMPTY);
         }
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);
@@ -53,21 +54,21 @@ public class ConfirmationService {
         userRepository.save(user);
 
         sendConfirmationEmail(user);
-        log.info("Confirmation token resent for email: {}", email);
+        log.info(MessageConstants.CONFIRMATION_TOKEN_RESENT, email);
     }
 
     @Transactional
     public void confirmAccount(String token) {
         if (!StringUtils.hasText(token)) {
-            log.error("Cannot confirm account: token is null or empty");
-            throw new InvalidTokenException("Token cannot be null or empty");
+            log.error(MessageConstants.CANNOT_CONFIRM_TOKEN_NULL);
+            throw new InvalidTokenException(MessageConstants.TOKEN_NULL_OR_EMPTY);
         }
         User user = userRepository.findByConfirmationToken(token)
-                .orElseThrow(() -> new InvalidTokenException("Invalid confirmation token"));
+                .orElseThrow(() -> new InvalidTokenException(MessageConstants.INVALID_CONFIRMATION_TOKEN));
 
         if (!StringUtils.hasText(user.getEmail())) {
-            log.error("Cannot confirm account: user email is null for token {}", token);
-            throw new InvalidEmailException("User email cannot be null");
+            log.error(MessageConstants.CANNOT_CONFIRM_EMAIL_NULL, token);
+            throw new InvalidEmailException(MessageConstants.USER_EMAIL_NULL);
         }
         tokenService.validateToken(user.getTokenCreationTime(), user.getEmail());
 
@@ -76,6 +77,6 @@ public class ConfirmationService {
         user.setTokenCreationTime(null);
         userRepository.save(user);
 
-        log.info("Account confirmed successfully for user: {}", user.getUsername());
+        log.info(MessageConstants.ACCOUNT_CONFIRMED_FOR_USER, user.getUsername());
     }
 }
