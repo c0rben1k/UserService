@@ -1,14 +1,11 @@
 package by.algin.userservice.exception;
 
-public class TokenExpiredException extends RuntimeException {
-    private final String email;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-    public TokenExpiredException(String email) {
-        super(ErrorCode.EXPIRED_TOKEN.getMessage());
-        this.email = email;
-    }
-
-    public String getEmail() {
-        return email;
+@ResponseStatus(HttpStatus.UNAUTHORIZED)
+public class TokenExpiredException extends ApiException {
+    public TokenExpiredException(String message) {
+        super(ErrorCode.EXPIRED_TOKEN, message);
     }
 }

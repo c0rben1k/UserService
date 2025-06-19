@@ -1,8 +1,9 @@
 package by.algin.userservice.service;
 
-import by.algin.userservice.dto.request.RegisterRequest;
-import by.algin.userservice.dto.response.ApiResponse;
-import by.algin.userservice.dto.response.UserResponse;
+import by.algin.dto.request.RegisterRequest;
+import by.algin.dto.response.ApiResponse;
+import by.algin.dto.response.UserResponse;
+import by.algin.userservice.constants.MessageConstants;
 import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.UserNotFoundException;
@@ -22,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -40,7 +40,7 @@ public class UserService {
 
     @Transactional
     public ApiResponse<UserResponse> registerUser(RegisterRequest registerRequest) {
-        log.info("Registering new user with username: {}", registerRequest.getUsername());
+        log.info(MessageConstants.REGISTERING_USER, registerRequest.getUsername());
         userValidator.validateRegistrationRequest(registerRequest);
         Role userRole = roleRepository.findByName(RoleConstants.USER)
                 .orElseThrow(RoleNotFoundException::new);
@@ -50,12 +50,12 @@ public class UserService {
         user.setConfirmationToken(tokenService.generateToken());
         user.setTokenCreationTime(LocalDateTime.now());
         User savedUser = userRepository.save(user);
-        log.info("User registered successfully with id: {}", savedUser.getId());
+        log.info(MessageConstants.USER_REGISTERED_WITH_ID, savedUser.getId());
         confirmationService.sendConfirmationEmail(savedUser);
         UserResponse userResponse = userMapper.toUserResponse(savedUser);
         return new ApiResponse<>(
                 true,
-                "User registered successfully. Please check your email for confirmation instructions.",
+                MessageConstants.USER_REGISTERED_SUCCESSFULLY,
                 userResponse
         );
     }
@@ -63,18 +63,18 @@ public class UserService {
     @Transactional
     public ApiResponse<String> confirmAccount(String token) {
         confirmationService.confirmAccount(token);
-        return new ApiResponse<>(true, "Account confirmed successfully. You can now login.", null);
+        return new ApiResponse<>(true, MessageConstants.ACCOUNT_CONFIRMED_SUCCESSFULLY, null);
     }
 
     @Transactional
     public void resendConfirmationToken(String email) {
-        log.info("Checking rate limit for resend confirmation token request for email: {}", email);
+        log.info(MessageConstants.CHECKING_RATE_LIMIT, email);
         rateLimiter.checkRateLimit(email);
         confirmationService.resendConfirmationToken(email);
     }
 
-    public UserResponse getUserByField(String field, String value) {
-        log.info("Getting user by field: {} with value: {}", field, value);
+    public ApiResponse<UserResponse> getUserByField(String field, String value) {
+        log.info(MessageConstants.GETTING_USER_BY_FIELD, field, value);
 
         User user;
         switch (field.toLowerCase()) {
@@ -82,35 +82,24 @@ public class UserService {
                 try {
                     Long id = Long.parseLong(value);
                     user = userRepository.findById(id)
-                            .orElseThrow(() -> new UserNotFoundException("User not found with id: " + value));
+                            .orElseThrow(() -> new UserNotFoundException(MessageConstants.USER_NOT_FOUND_WITH_ID + value));
                 } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Invalid id format: " + value);
+                    throw new IllegalArgumentException(MessageConstants.INVALID_ID_FORMAT + value);
                 }
                 break;
             case "username":
                 user = userRepository.findByUsername(value)
-                        .orElseThrow(() -> new UserNotFoundException("User not found with username: " + value));
+                        .orElseThrow(() -> new UserNotFoundException(MessageConstants.USER_NOT_FOUND_WITH_USERNAME + value));
                 break;
             case "email":
                 user = userRepository.findByEmail(value)
-                        .orElseThrow(() -> new UserNotFoundException("User not found with email: " + value));
+                        .orElseThrow(() -> new UserNotFoundException(MessageConstants.USER_NOT_FOUND_WITH_EMAIL + value));
                 break;
             default:
-                throw new IllegalArgumentException("Invalid search field: " + field + ". Use 'id', 'username', or 'email'.");
+                throw new IllegalArgumentException(MessageConstants.INVALID_SEARCH_FIELD + field + MessageConstants.VALID_SEARCH_FIELDS);
         }
 
-        return userMapper.toUserResponse(user);
+        return new ApiResponse<>(true, MessageConstants.USER_FOUND_SIMPLE, userMapper.toUserResponse(user));
     }
 
-    public List<UserResponse> searchUsers(String field, String value) {
-        log.info("Searching users by field: {} with value: {}", field, value);
-        try {
-            UserResponse user = getUserByField(field, value);
-            return Collections.singletonList(user);
-        } catch (UserNotFoundException e) {
-            throw e;
-        } catch (IllegalArgumentException e) {
-            throw e;
-        }
-    }
 }

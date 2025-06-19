@@ -1,5 +1,6 @@
 package by.algin.userservice.service;
 
+import by.algin.userservice.constants.MessageConstants;
 import by.algin.userservice.mapper.EmailMapper;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,10 @@ public class EmailService {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessage preparedMessage = emailMapper.createConfirmationEmail(mimeMessage, to, token);
             mailSender.send(preparedMessage);
-            log.info("Confirmation email sent successfully to: {}", to);
+            log.info(MessageConstants.CONFIRMATION_EMAIL_SENT_TO, to);
         } catch (Exception e) {
-            log.error("Failed to send confirmation email to: {}", to, e);
-            throw new RuntimeException("Failed to send confirmation email: " + e.getMessage(), e);
+            log.error(MessageConstants.FAILED_TO_SEND_EMAIL_TO, to, e);
+            throw new RuntimeException(MessageConstants.FAILED_TO_SEND_EMAIL + e.getMessage(), e);
         }
     }
 }

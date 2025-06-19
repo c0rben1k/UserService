@@ -18,7 +18,8 @@ public final class PathConstants {
 
     // API paths
     public static final String API = "/api/**";
-    public static final String API_AUTH = "/api/auth";
+    public static final String API_AUTH = "/api/auth/**";
+    public static final String API_AUTH_BASE = "/api/auth";
     public static final String API_AUTH_REGISTER = "/api/auth/register";
     public static final String API_AUTH_LOGIN = "/api/auth/login";
     public static final String API_AUTH_REFRESH_TOKEN = "/api/auth/refresh-token";
@@ -29,6 +30,16 @@ public final class PathConstants {
     public static final String API_USERS_ID = "/api/users/{id}";
     public static final String API_USERS_BY_USERNAME = "/api/users/by-username/{username}";
     public static final String API_USERS_BY_EMAIL = "/api/users/by-email/{email}";
+    public static final String API_USERS_SEARCH = "/api/users/search";
+    
+    public static final String SEARCH = "/search";
+
+    public static final String REGISTER = "/register";
+    public static final String LOGIN = "/login";
+    public static final String REFRESH_TOKEN = "/refresh-token";
+    public static final String VALIDATE_TOKEN = "/validate-token";
+    public static final String CONFIRM = "/confirm";
+    public static final String RESEND_CONFIRMATION = "/resend-confirmation";
 
     // Template names
     public static final String TEMPLATE_INDEX = "index";

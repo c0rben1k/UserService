@@ -32,7 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
-# Дополнительные игнорируемые файлы (по вашему запросу)
+.env
+.env.local
+
 .gitattributes
 .mvn/wrapper/maven-wrapper.properties
 mvnw
@@ -41,3 +43,5 @@ src/main/resources/DB/sql.sql
 src/main/resources/application.properties
 src/test/java/by/algin/userservice/UserServiceApplicationTests.java
 pom.xml
+README.md
+ENV_SETUP.md

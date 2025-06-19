@@ -1,16 +1,20 @@
 package by.algin.userservice.mapper;
 
-import by.algin.userservice.dto.response.AuthResponse;
-import by.algin.userservice.dto.response.TokenValidationResponse;
+import by.algin.dto.response.AuthResponse;
+import by.algin.dto.response.TokenValidationResponse;
 import by.algin.userservice.entity.Role;
 import by.algin.userservice.entity.User;
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.HashSet;
 
+@Slf4j
 @Component
 public class AuthMapper {
 
@@ -19,9 +23,16 @@ public class AuthMapper {
             return null;
         }
 
-        HashSet<String> roles = user.getRoles().stream()
+        log.info("User roles in mapper: {}", user.getRoles());
+        log.info("User roles size: {}", user.getRoles() != null ? user.getRoles().size() : "null");
+
+        HashSet<String> roles = user.getRoles() != null
+                ? user.getRoles().stream()
                 .map(Role::getName)
-                .collect(Collectors.toCollection(HashSet::new));
+                .collect(Collectors.toCollection(HashSet::new))
+                : new HashSet<>();
+
+        log.info("Mapped roles: {}", roles);
 
         return AuthResponse.builder()
                 .userId(user.getId())
@@ -35,44 +46,37 @@ public class AuthMapper {
     }
 
     public TokenValidationResponse toTokenValidationResponse(User user, Claims claims, boolean isValid) {
-        if (!isValid) {
-            return TokenValidationResponse.builder()
-                    .isValid(false)
-                    .build();
+        if (!isValid || user == null) {
+            return TokenValidationResponse.invalid("Token validation failed");
         }
 
-        if (user == null) {
-            return TokenValidationResponse.builder()
-                    .isValid(false)
-                    .build();
-        }
-
-        HashSet<String> roles = user.getRoles().stream()
+        Set<String> roles = user.getRoles().stream()
                 .map(Role::getName)
-                .collect(Collectors.toCollection(HashSet::new));
+                .collect(Collectors.toSet());
 
-        HashMap<String, Object> customClaims = new HashMap<>();
-        if (claims != null) {
-            customClaims.putAll(claims);
-            customClaims.remove("sub");
-            customClaims.remove("iat");
-            customClaims.remove("exp");
-            customClaims.remove("authorities");
-        }
+        Map<String, Object> customClaims = extractCustomClaims(claims);
 
-        return TokenValidationResponse.builder()
-                .isValid(true)
-                .userId(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .roles(roles)
-                .claims(customClaims)
-                .build();
+        return TokenValidationResponse.valid(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                roles,
+                customClaims
+        );
     }
 
     public TokenValidationResponse toInvalidTokenResponse(String message) {
-        return TokenValidationResponse.builder()
-                .isValid(false)
-                .build();
+        log.warn("Invalid token: {}", message);
+        return TokenValidationResponse.invalid(message);
+    }
+
+    private Map<String, Object> extractCustomClaims(Claims claims) {
+        if (claims == null) {
+            return new HashMap<>();
+        }
+
+        Map<String, Object> customClaims = new HashMap<>(claims);
+        customClaims.keySet().removeAll(Set.of("sub", "iat", "exp", "authorities"));
+        return customClaims;
     }
 }

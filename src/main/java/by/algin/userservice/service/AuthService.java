@@ -1,16 +1,17 @@
 package by.algin.userservice.service;
 
-import by.algin.userservice.exception.UserNotFoundException;
-import by.algin.userservice.exception.InvalidTokenException;
-import by.algin.userservice.dto.request.LoginRequest;
-import by.algin.userservice.dto.request.TokenRefreshRequest;
-import by.algin.userservice.dto.request.TokenValidationRequest;
-import by.algin.userservice.dto.response.ApiResponse;
-import by.algin.userservice.dto.response.AuthResponse;
-import by.algin.userservice.dto.response.TokenValidationResponse;
+import by.algin.dto.request.LoginRequest;
+import by.algin.dto.request.TokenRefreshRequest;
+import by.algin.dto.request.TokenValidationRequest;
+import by.algin.dto.response.ApiResponse;
+import by.algin.dto.response.AuthResponse;
+import by.algin.dto.response.TokenValidationResponse;
+import by.algin.userservice.constants.MessageConstants;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.AccountDisabledException;
 import by.algin.userservice.exception.InvalidCredentialsException;
+import by.algin.userservice.exception.InvalidTokenException;
+import by.algin.userservice.exception.UserNotFoundException;
 import by.algin.userservice.mapper.AuthMapper;
 import by.algin.userservice.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -24,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -36,94 +38,155 @@ public class AuthService {
     private final AuthMapper authMapper;
 
     public ApiResponse<AuthResponse> login(LoginRequest loginRequest) {
-        log.info("Attempting login for user: {}", loginRequest.getUsernameOrEmail());
+        log.info(MessageConstants.PROCESSING_LOGIN_REQUEST, loginRequest.getUsernameOrEmail());
 
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getUsernameOrEmail(),
-                            loginRequest.getPassword()
-                    )
-            );
+            User user = authenticateAndGetUser(loginRequest);
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            validateUserAccount(user);
+            logUserRoles(user);
 
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            User user = userRepository.findByUsernameOrEmail(
-                    userDetails.getUsername(), userDetails.getUsername()
-            ).orElseThrow(UserNotFoundException::new);
+            AuthResponse authResponse = createAuthResponse(user);
 
-            if (!user.isEnabled()) {
-                throw new AccountDisabledException();
-            }
-
-            String accessToken = jwtService.generateAccessToken(authentication);
-            String refreshToken = jwtService.generateRefreshToken(authentication);
-            Long expiresIn = jwtService.getClaimsFromToken(accessToken).getExpiration().getTime();
-
-            AuthResponse authResponse = authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
-
-            log.info("User logged in successfully: {}", user.getUsername());
-
-            return new ApiResponse<>(true, "Login successful", authResponse);
+            log.info(MessageConstants.LOGIN_SUCCESSFUL_FOR_USER, user.getUsername());
+            return new ApiResponse<>(true, MessageConstants.LOGIN_SUCCESSFUL, authResponse);
 
         } catch (BadCredentialsException e) {
-            log.error("Invalid credentials for user: {}", loginRequest.getUsernameOrEmail());
+            log.error(MessageConstants.INVALID_CREDENTIALS_FOR_USER, loginRequest.getUsernameOrEmail());
             throw new InvalidCredentialsException();
         } catch (DisabledException e) {
-            log.error("Account disabled for user: {}", loginRequest.getUsernameOrEmail());
+            log.error(MessageConstants.ACCOUNT_DISABLED_FOR_USER, loginRequest.getUsernameOrEmail());
             throw new AccountDisabledException();
         }
     }
 
     public ApiResponse<AuthResponse> refreshToken(TokenRefreshRequest refreshRequest) {
-        log.info("Refreshing token");
+        log.info(MessageConstants.PROCESSING_TOKEN_REFRESH);
 
-        if (!jwtService.validateToken(refreshRequest.getRefreshToken())) {
-            throw new InvalidTokenException();
+        String refreshToken = refreshRequest.getRefreshToken();
+        if (!StringUtils.hasText(refreshToken)) {
+            log.error(MessageConstants.REFRESH_TOKEN_NULL_OR_EMPTY_LOG);
+            throw new InvalidTokenException(MessageConstants.REFRESH_TOKEN_NULL_OR_EMPTY);
         }
 
-        String username = jwtService.getUsernameFromToken(refreshRequest.getRefreshToken());
+        validateRefreshToken(refreshToken);
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(UserNotFoundException::new);
+        String username = jwtService.getUsernameFromToken(refreshToken);
+        User user = findUserByUsername(username);
 
-        if (!user.isEnabled()) {
-            throw new AccountDisabledException();
-        }
+        validateUserAccount(user);
 
-        String accessToken = jwtService.generateAccessToken(user);
-        Long expiresIn = jwtService.getClaimsFromToken(accessToken).getExpiration().getTime();
+        AuthResponse authResponse = createRefreshAuthResponse(user, refreshToken);
 
-        AuthResponse authResponse = authMapper.toAuthResponse(
-                user,
-                accessToken,
-                refreshRequest.getRefreshToken(),
-                expiresIn
-        );
-        log.info("Token refreshed successfully for user: {}", user.getUsername());
-        return new ApiResponse<>(true, "Token refreshed successfully", authResponse);
+        log.info(MessageConstants.TOKEN_REFRESHED_FOR_USER, user.getUsername());
+        return new ApiResponse<>(true, MessageConstants.TOKEN_REFRESHED_SUCCESSFULLY, authResponse);
     }
 
     public ApiResponse<TokenValidationResponse> validateToken(TokenValidationRequest validationRequest) {
-        log.info("Validating token");
+        log.info(MessageConstants.PROCESSING_TOKEN_VALIDATION);
 
-        if (!jwtService.validateToken(validationRequest.getToken())) {
-            log.warn("Invalid token provided");
-            TokenValidationResponse invalidResponse = authMapper.toInvalidTokenResponse("Invalid token");
-            return new ApiResponse<>(false, "Invalid token", invalidResponse);
+        try {
+            Claims claims = jwtService.getAllClaimsFromToken(validationRequest.getToken());
+            String username = jwtService.getUsernameFromClaims(claims);
+
+            if (jwtService.isTokenExpired(claims)) {
+                log.warn(MessageConstants.INVALID_TOKEN_PROVIDED);
+                return createInvalidTokenResponse(MessageConstants.INVALID_TOKEN);
+            }
+
+            User user = findUserByUsername(username);
+
+            if (!user.isEnabled()) {
+                log.warn(MessageConstants.TOKEN_VALID_USER_DISABLED, username);
+                return createInvalidTokenResponse(MessageConstants.USER_IS_DISABLED);
+            }
+
+            TokenValidationResponse validationResponse = authMapper.toTokenValidationResponse(user, claims, true);
+            log.info(MessageConstants.TOKEN_VALIDATED_FOR_USER, username);
+            return new ApiResponse<>(true, MessageConstants.TOKEN_IS_VALID, validationResponse);
+        } catch (Exception e) {
+            log.warn(MessageConstants.INVALID_TOKEN_PROVIDED);
+            return createInvalidTokenResponse(MessageConstants.INVALID_TOKEN);
         }
-        String username = jwtService.getUsernameFromToken(validationRequest.getToken());
-        Claims claims = jwtService.getClaimsFromToken(validationRequest.getToken());
-        User user = userRepository.findByUsername(username)
+    }
+
+    private User authenticateAndGetUser(LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsernameOrEmail(),
+                        loginRequest.getPassword()
+                )
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        return userRepository.findByUsernameOrEmail(userDetails.getUsername(), userDetails.getUsername())
                 .orElseThrow(UserNotFoundException::new);
+    }
+
+    private User findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(UserNotFoundException::new);
+    }
+
+    private void validateUserAccount(User user) {
         if (!user.isEnabled()) {
-            log.warn("Token is valid but user is disabled: {}", username);
-            TokenValidationResponse disabledResponse = authMapper.toInvalidTokenResponse("User is disabled");
-            return new ApiResponse<>(false, "User is disabled", disabledResponse);
+            throw new AccountDisabledException();
         }
-        TokenValidationResponse validationResponse = authMapper.toTokenValidationResponse(user, claims, true);
-        log.info("Token validated successfully for user: {}", username);
-        return new ApiResponse<>(true, "Token is valid", validationResponse);
+    }
+
+    private void validateRefreshToken(String refreshToken) {
+        try {
+            Claims claims = jwtService.getAllClaimsFromToken(refreshToken);
+
+            if (jwtService.isTokenExpired(claims)) {
+                log.error(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT_LOG);
+                throw new InvalidTokenException(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT);
+            }
+
+            if (!jwtService.isRefreshToken(claims)) {
+                log.error(MessageConstants.TOKEN_NOT_REFRESH_TOKEN_LOG);
+                throw new InvalidTokenException(MessageConstants.TOKEN_NOT_REFRESH_TOKEN);
+            }
+        } catch (InvalidTokenException e) {
+            throw e; 
+        } catch (Exception e) {
+            log.error(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT_LOG);
+            throw new InvalidTokenException(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT);
+        }
+    }
+
+    private void logUserRoles(User user) {
+        log.info(MessageConstants.USER_FOUND, user.getUsername());
+        log.info(MessageConstants.USER_ROLES_BEFORE_MAPPING, user.getRoles());
+        if (user.getRoles() != null) {
+            user.getRoles().forEach(role -> log.info(MessageConstants.ROLE_LOG, role.getName()));
+        }
+    }
+
+    private AuthResponse createAuthResponse(User user) {
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        Claims accessTokenClaims = jwtService.getAllClaimsFromToken(accessToken);
+        Long expiresIn = accessTokenClaims.getExpiration().getTime() / 1000;
+
+        AuthResponse authResponse = authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
+        log.info(MessageConstants.AUTH_RESPONSE_ROLES, authResponse.getRoles());
+
+        return authResponse;
+    }
+
+    private AuthResponse createRefreshAuthResponse(User user, String refreshToken) {
+        String accessToken = jwtService.generateAccessToken(user);
+
+        Claims accessTokenClaims = jwtService.getAllClaimsFromToken(accessToken);
+        Long expiresIn = accessTokenClaims.getExpiration().getTime() / 1000;
+
+        return authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
+    }
+
+    private ApiResponse<TokenValidationResponse> createInvalidTokenResponse(String message) {
+        TokenValidationResponse invalidResponse = authMapper.toInvalidTokenResponse(message);
+        return new ApiResponse<>(false, message, invalidResponse);
     }
 }
