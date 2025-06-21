@@ -62,10 +62,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> resendConfirmation(@RequestParam("email") String email) {
         log.info("Processing resend confirmation request for: {}", email);
         userService.resendConfirmationToken(email);
-        return ResponseEntity.ok(new ApiResponse<>(
-                true,
-                MessageConstants.CONFIRMATION_EMAIL_RESENT,
-                null
-        ));
+        return ResponseEntity.ok(ApiResponse.success(MessageConstants.CONFIRMATION_EMAIL_RESENT, null));
     }
 }

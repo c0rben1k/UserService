@@ -53,17 +53,13 @@ public class UserService {
         log.info(MessageConstants.USER_REGISTERED_WITH_ID, savedUser.getId());
         confirmationService.sendConfirmationEmail(savedUser);
         UserResponse userResponse = userMapper.toUserResponse(savedUser);
-        return new ApiResponse<>(
-                true,
-                MessageConstants.USER_REGISTERED_SUCCESSFULLY,
-                userResponse
-        );
+        return ApiResponse.success(MessageConstants.USER_REGISTERED_SUCCESSFULLY, userResponse);
     }
 
     @Transactional
     public ApiResponse<String> confirmAccount(String token) {
         confirmationService.confirmAccount(token);
-        return new ApiResponse<>(true, MessageConstants.ACCOUNT_CONFIRMED_SUCCESSFULLY, null);
+        return ApiResponse.success(MessageConstants.ACCOUNT_CONFIRMED_SUCCESSFULLY, null);
     }
 
     @Transactional
@@ -78,7 +74,7 @@ public class UserService {
 
         User user;
         switch (field.toLowerCase()) {
-            case "id":
+            case MessageConstants.SEARCH_FIELD_ID:
                 try {
                     Long id = Long.parseLong(value);
                     user = userRepository.findById(id)
@@ -87,11 +83,11 @@ public class UserService {
                     throw new IllegalArgumentException(MessageConstants.INVALID_ID_FORMAT + value);
                 }
                 break;
-            case "username":
+            case MessageConstants.SEARCH_FIELD_USERNAME:
                 user = userRepository.findByUsername(value)
                         .orElseThrow(() -> new UserNotFoundException(MessageConstants.USER_NOT_FOUND_WITH_USERNAME + value));
                 break;
-            case "email":
+            case MessageConstants.SEARCH_FIELD_EMAIL:
                 user = userRepository.findByEmail(value)
                         .orElseThrow(() -> new UserNotFoundException(MessageConstants.USER_NOT_FOUND_WITH_EMAIL + value));
                 break;
@@ -99,7 +95,7 @@ public class UserService {
                 throw new IllegalArgumentException(MessageConstants.INVALID_SEARCH_FIELD + field + MessageConstants.VALID_SEARCH_FIELDS);
         }
 
-        return new ApiResponse<>(true, MessageConstants.USER_FOUND_SIMPLE, userMapper.toUserResponse(user));
+        return ApiResponse.success(MessageConstants.USER_FOUND_SIMPLE, userMapper.toUserResponse(user));
     }
 
 }

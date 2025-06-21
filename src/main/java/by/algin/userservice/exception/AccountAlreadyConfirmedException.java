@@ -1,7 +1,11 @@
 package by.algin.userservice.exception;
 
-public class AccountAlreadyConfirmedException extends ApiException {
+public class AccountAlreadyConfirmedException extends RuntimeException {
   public AccountAlreadyConfirmedException() {
-    super(ErrorCode.ACCOUNT_ALREADY_CONFIRMED);
+    super(UserServiceErrorCode.ACCOUNT_ALREADY_CONFIRMED.getDefaultMessage());
+  }
+
+  public AccountAlreadyConfirmedException(String message) {
+    super(message);
   }
 }

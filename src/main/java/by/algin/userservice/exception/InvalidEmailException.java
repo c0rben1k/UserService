@@ -1,11 +1,11 @@
 package by.algin.userservice.exception;
 
-public class InvalidEmailException extends ApiException {
+public class InvalidEmailException extends RuntimeException {
   public InvalidEmailException() {
-    super(ErrorCode.INVALID_EMAIL);
+    super(UserServiceErrorCode.INVALID_EMAIL_FORMAT.getDefaultMessage());
   }
 
   public InvalidEmailException(String message) {
-    super(ErrorCode.INVALID_EMAIL, message);
+    super(message);
   }
 }
