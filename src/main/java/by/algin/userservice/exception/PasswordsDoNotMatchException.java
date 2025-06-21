@@ -1,7 +1,11 @@
 package by.algin.userservice.exception;
 
-public class PasswordsDoNotMatchException extends ApiException {
+public class PasswordsDoNotMatchException extends RuntimeException {
     public PasswordsDoNotMatchException() {
-        super(ErrorCode.PASSWORDS_DONT_MATCH);
+        super(UserServiceErrorCode.PASSWORDS_DONT_MATCH.getDefaultMessage());
+    }
+
+    public PasswordsDoNotMatchException(String message) {
+        super(message);
     }
 }

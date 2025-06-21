@@ -1,23 +1,22 @@
 package by.algin.userservice.exception;
 
+import by.algin.userservice.constants.MessageConstants;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import by.algin.userservice.exception.ErrorCode;
 import lombok.Getter;
 
 @Getter
 @ResponseStatus(HttpStatus.FORBIDDEN)
-public class AccountDisabledException extends ApiException {
+public class AccountDisabledException extends RuntimeException {
     public AccountDisabledException() {
-        super(ErrorCode.ACCOUNT_DISABLED);
+        super(MessageConstants.USER_IS_DISABLED);
     }
 
     public AccountDisabledException(String details) {
-        super(ErrorCode.ACCOUNT_DISABLED, details);
+        super(details);
     }
 
     public AccountDisabledException(String message, Throwable cause) {
-        this(message);
-        initCause(cause);
+        super(message, cause);
     }
 }

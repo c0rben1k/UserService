@@ -75,5 +75,33 @@ public final class MessageConstants {
     public static final String JWT_VALIDATION_FAILED = "JWT token validation failed: {}";
     public static final String FAILED_TO_CHECK_TOKEN_TYPE = "Failed to check token type: {}";
 
+    public static final String MISSING_TOKEN = "Missing token";
+    public static final String JWT_AUTHENTICATION_FAILED = "JWT authentication failed";
+
+    public static final String REASON_BAD_CREDENTIALS = "bad_credentials";
+    public static final String REASON_AUTHENTICATION_FAILED = "authentication_failed";
+    public static final String REASON_ACCESS_DENIED = "access_denied";
+    public static final String REASON_TOKEN_EXPIRED = "token_expired";
+    public static final String REASON_USER_NOT_FOUND = "user_not_found";
+    public static final String REASON_INVALID_EMAIL_FORMAT = "invalid_email_format";
+    public static final String REASON_ACCOUNT_ALREADY_CONFIRMED = "account_already_confirmed";
+
+    public static final String DETAIL_KEY_REASON = "reason";
+    public static final String DETAIL_KEY_ORIGINAL_MESSAGE = "originalMessage";
+    public static final String DETAIL_KEY_EXCEPTION_TYPE = "exceptionType";
+
+    public static final String SERVICE_NAME = "USER-SERVICE";
+
+    public static final String ERROR_MSG_AUTHENTICATION_FAILED = "Authentication failed";
+    public static final String ERROR_MSG_ACCESS_DENIED = "Access denied";
+    public static final String ERROR_MSG_TOKEN_EXPIRED = "Token has expired";
+    public static final String ERROR_MSG_ACCOUNT_DISABLED_FOR_USER = "Account is disabled for user: ";
+
+    public static final String ERROR_CODE_INVALID_TOKEN = "INVALID_TOKEN";
+
+    public static final String SEARCH_FIELD_ID = "id";
+    public static final String SEARCH_FIELD_USERNAME = "username";
+    public static final String SEARCH_FIELD_EMAIL = "email";
+
     private MessageConstants() {}
 }
