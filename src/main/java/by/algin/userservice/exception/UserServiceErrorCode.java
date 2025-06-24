@@ -22,6 +22,7 @@ public enum UserServiceErrorCode {
     AUTHENTICATION_FAILED("USER_AUTH_002", "Authentication failed", HttpStatus.UNAUTHORIZED, "AUTHENTICATION"),
     ACCESS_DENIED("USER_AUTH_003", "Access denied", HttpStatus.FORBIDDEN, "AUTHENTICATION"),
     TOKEN_EXPIRED("USER_AUTH_004", "Token has expired", HttpStatus.UNAUTHORIZED, "AUTHENTICATION"),
+    INVALID_TOKEN("USER_AUTH_005", "Invalid token", HttpStatus.UNAUTHORIZED, "AUTHENTICATION"),
 
     RATE_LIMIT_EXCEEDED("USER_RATE_001", "Rate limit exceeded", HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITING"),
 

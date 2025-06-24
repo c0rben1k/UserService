@@ -1,10 +1,8 @@
 package by.algin.userservice.exception;
 
-import by.algin.userservice.constants.MessageConstants;
-
 public class InvalidTokenException extends RuntimeException {
     public InvalidTokenException() {
-        super(MessageConstants.INVALID_TOKEN);
+        super(UserServiceErrorCode.INVALID_TOKEN.getDefaultMessage());
     }
 
     public InvalidTokenException(String message) {

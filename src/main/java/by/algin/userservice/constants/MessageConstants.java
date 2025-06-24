@@ -97,8 +97,6 @@ public final class MessageConstants {
     public static final String ERROR_MSG_TOKEN_EXPIRED = "Token has expired";
     public static final String ERROR_MSG_ACCOUNT_DISABLED_FOR_USER = "Account is disabled for user: ";
 
-    public static final String ERROR_CODE_INVALID_TOKEN = "INVALID_TOKEN";
-
     public static final String SEARCH_FIELD_ID = "id";
     public static final String SEARCH_FIELD_USERNAME = "username";
     public static final String SEARCH_FIELD_EMAIL = "email";

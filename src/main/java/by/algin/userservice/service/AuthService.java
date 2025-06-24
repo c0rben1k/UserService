@@ -10,6 +10,7 @@ import by.algin.userservice.constants.MessageConstants;
 import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.InvalidTokenException;
 import by.algin.userservice.exception.UserNotFoundException;
+import by.algin.userservice.exception.UserServiceErrorCode;
 import by.algin.userservice.mapper.AuthMapper;
 import by.algin.userservice.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -185,6 +186,6 @@ public class AuthService {
 
     private ApiResponse<TokenValidationResponse> createInvalidTokenResponse(String message) {
         TokenValidationResponse invalidResponse = authMapper.toInvalidTokenResponse(message);
-        return ApiResponse.error(MessageConstants.ERROR_CODE_INVALID_TOKEN, message, invalidResponse);
+        return ApiResponse.error(UserServiceErrorCode.INVALID_TOKEN.getCode(), message, invalidResponse);
     }
 }

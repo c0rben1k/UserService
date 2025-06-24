@@ -1,6 +1,7 @@
 package by.algin.userservice.security;
 
 import by.algin.dto.response.ApiResponse;
+import by.algin.userservice.exception.UserServiceErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,7 +30,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
         ApiResponse<Object> apiResponse = ApiResponse.error(
-                "UNAUTHORIZED",
+                UserServiceErrorCode.AUTHENTICATION_FAILED.getCode(),
                 "Unauthorized: " + authException.getMessage()
         );
 
