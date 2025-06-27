@@ -68,12 +68,10 @@ public class AuthService {
             throw new InvalidTokenException(MessageConstants.REFRESH_TOKEN_NULL_OR_EMPTY);
         }
 
-        validateRefreshToken(refreshToken);
+        Claims claims = validateRefreshTokenAndGetClaims(refreshToken);
 
-        String username = jwtService.getUsernameFromToken(refreshToken);
-        User user = findUserByUsername(username);
-
-        validateUserAccount(user);
+        String username = jwtService.getUsernameFromClaims(claims);
+        User user = findUserByUsernameWithValidation(username, true);
 
         AuthResponse authResponse = createRefreshAuthResponse(user, refreshToken);
 
@@ -93,7 +91,7 @@ public class AuthService {
                 return createInvalidTokenResponse(MessageConstants.INVALID_TOKEN);
             }
 
-            User user = findUserByUsername(username);
+            User user = findUserByUsernameWithValidation(username, false);
 
             if (!user.isEnabled()) {
                 log.warn(MessageConstants.TOKEN_VALID_USER_DISABLED, username);
@@ -123,9 +121,15 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
-    private User findUserByUsername(String username) {
-        return userRepository.findByUsername(username)
+    private User findUserByUsernameWithValidation(String username, boolean validateAccount) {
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
+
+        if (validateAccount) {
+            validateUserAccount(user);
+        }
+
+        return user;
     }
 
     private void validateUserAccount(User user) {
@@ -134,7 +138,7 @@ public class AuthService {
         }
     }
 
-    private void validateRefreshToken(String refreshToken) {
+    private Claims validateRefreshTokenAndGetClaims(String refreshToken) {
         try {
             Claims claims = jwtService.getAllClaimsFromToken(refreshToken);
 
@@ -147,13 +151,17 @@ public class AuthService {
                 log.error(MessageConstants.TOKEN_NOT_REFRESH_TOKEN_LOG);
                 throw new InvalidTokenException(MessageConstants.TOKEN_NOT_REFRESH_TOKEN);
             }
+
+            return claims;
         } catch (InvalidTokenException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             log.error(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT_LOG);
             throw new InvalidTokenException(MessageConstants.INVALID_REFRESH_TOKEN_FORMAT);
         }
     }
+
+
 
     private void logUserRoles(User user) {
         log.info(MessageConstants.USER_FOUND, user.getUsername());
@@ -166,8 +174,7 @@ public class AuthService {
     private AuthResponse createAuthResponse(User user) {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
-        Claims accessTokenClaims = jwtService.getAllClaimsFromToken(accessToken);
-        Long expiresIn = accessTokenClaims.getExpiration().getTime() / 1000;
+        Long expiresIn = getTokenExpirationTime(accessToken);
 
         AuthResponse authResponse = authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
         log.info(MessageConstants.AUTH_RESPONSE_ROLES, authResponse.getRoles());
@@ -177,11 +184,14 @@ public class AuthService {
 
     private AuthResponse createRefreshAuthResponse(User user, String refreshToken) {
         String accessToken = jwtService.generateAccessToken(user);
-
-        Claims accessTokenClaims = jwtService.getAllClaimsFromToken(accessToken);
-        Long expiresIn = accessTokenClaims.getExpiration().getTime() / 1000;
+        Long expiresIn = getTokenExpirationTime(accessToken);
 
         return authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
+    }
+
+    private Long getTokenExpirationTime(String token) {
+        Claims claims = jwtService.getAllClaimsFromToken(token);
+        return jwtService.getExpirationFromClaims(claims).getTime() / 1000;
     }
 
     private ApiResponse<TokenValidationResponse> createInvalidTokenResponse(String message) {

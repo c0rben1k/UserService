@@ -31,6 +31,15 @@ public class UserServiceGlobalExceptionHandler extends BaseExceptionHandler {
             String reasonKey,
             Exception ex,
             boolean includeOriginalMessage) {
+        return handleException(errorCode, reasonKey, ex, includeOriginalMessage, null);
+    }
+
+    private ResponseEntity<ApiResponse<Object>> handleException(
+            UserServiceErrorCode errorCode,
+            String reasonKey,
+            Exception ex,
+            boolean includeOriginalMessage,
+            Map<String, Object> additionalDetails) {
         Map<String, Object> details = new HashMap<>();
         details.put(MessageConstants.DETAIL_KEY_REASON, reasonKey);
 
@@ -42,48 +51,91 @@ public class UserServiceGlobalExceptionHandler extends BaseExceptionHandler {
             details.put(MessageConstants.DETAIL_KEY_EXCEPTION_TYPE, ex.getClass().getSimpleName());
         }
 
+        if (additionalDetails != null) {
+            details.putAll(additionalDetails);
+        }
+
         return createError(errorCode.getCode(), errorCode.getDefaultMessage(), errorCode.getHttpStatus().value(), details);
+    }
+
+    private ResponseEntity<ApiResponse<Object>> handleUserException(UserServiceErrorCode errorCode, String reasonKey, Exception ex) {
+        logger.warn("{}: {}", errorCode.getDefaultMessage(), ex.getMessage());
+        return handleException(errorCode, reasonKey, ex, true);
+    }
+
+    private ResponseEntity<ApiResponse<Object>> handleAuthException(UserServiceErrorCode errorCode, String reasonKey, Exception ex) {
+        logger.warn("Authentication error - {}: {}", errorCode.getDefaultMessage(), ex.getMessage());
+        return handleException(errorCode, reasonKey, ex, false);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Object>> handleBadCredentials(BadCredentialsException ex) {
-        logger.warn("Bad credentials attempt: {}", ex.getMessage());
-        return handleException(UserServiceErrorCode.INVALID_CREDENTIALS, MessageConstants.REASON_BAD_CREDENTIALS, ex, false);
+        return handleAuthException(UserServiceErrorCode.INVALID_CREDENTIALS, MessageConstants.REASON_BAD_CREDENTIALS, ex);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<Object>> handleAuthentication(AuthenticationException ex) {
-        logger.warn("Authentication failed: {} - {}", ex.getClass().getSimpleName(), ex.getMessage());
-        return handleException(UserServiceErrorCode.AUTHENTICATION_FAILED, MessageConstants.REASON_AUTHENTICATION_FAILED, ex, false);
+        return handleAuthException(UserServiceErrorCode.AUTHENTICATION_FAILED, MessageConstants.REASON_AUTHENTICATION_FAILED, ex);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccessDenied(AccessDeniedException ex) {
-        logger.warn("Access denied: {}", ex.getMessage());
-        return handleException(UserServiceErrorCode.ACCESS_DENIED, MessageConstants.REASON_ACCESS_DENIED, ex, false);
+        return handleAuthException(UserServiceErrorCode.ACCESS_DENIED, MessageConstants.REASON_ACCESS_DENIED, ex);
     }
 
     @ExceptionHandler(TokenExpiredException.class)
     public ResponseEntity<ApiResponse<Object>> handleTokenExpired(TokenExpiredException ex) {
-        logger.warn("Token expired: {}", ex.getMessage());
-        return handleException(UserServiceErrorCode.TOKEN_EXPIRED, MessageConstants.REASON_TOKEN_EXPIRED, ex, false);
+        return handleAuthException(UserServiceErrorCode.TOKEN_EXPIRED, MessageConstants.REASON_TOKEN_EXPIRED, ex);
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleUserNotFound(UserNotFoundException ex) {
-        logger.warn("User not found: {}", ex.getMessage());
-        return handleException(UserServiceErrorCode.USER_NOT_FOUND, MessageConstants.REASON_USER_NOT_FOUND, ex, true);
+        return handleUserException(UserServiceErrorCode.USER_NOT_FOUND, MessageConstants.REASON_USER_NOT_FOUND, ex);
     }
 
     @ExceptionHandler(InvalidEmailException.class)
     public ResponseEntity<ApiResponse<Object>> handleInvalidEmail(InvalidEmailException ex) {
-        logger.warn("Invalid email format: {}", ex.getMessage());
-        return handleException(UserServiceErrorCode.INVALID_EMAIL_FORMAT, MessageConstants.REASON_INVALID_EMAIL_FORMAT, ex, true);
+        return handleUserException(UserServiceErrorCode.INVALID_EMAIL_FORMAT, MessageConstants.REASON_INVALID_EMAIL_FORMAT, ex);
     }
 
     @ExceptionHandler(AccountAlreadyConfirmedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccountAlreadyConfirmed(AccountAlreadyConfirmedException ex) {
-        logger.warn("Account already confirmed: {}", ex.getMessage());
-        return handleException(UserServiceErrorCode.ACCOUNT_ALREADY_CONFIRMED, MessageConstants.REASON_ACCOUNT_ALREADY_CONFIRMED, ex, true);
+        return handleUserException(UserServiceErrorCode.ACCOUNT_ALREADY_CONFIRMED, MessageConstants.REASON_ACCOUNT_ALREADY_CONFIRMED, ex);
+    }
+
+    @ExceptionHandler(AccountDisabledException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAccountDisabled(AccountDisabledException ex) {
+        return handleUserException(UserServiceErrorCode.ACCOUNT_DISABLED, "account_disabled", ex);
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        return handleUserException(UserServiceErrorCode.EMAIL_ALREADY_EXISTS, "email_already_exists", ex);
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
+        return handleUserException(UserServiceErrorCode.USERNAME_ALREADY_EXISTS, "username_already_exists", ex);
+    }
+
+    @ExceptionHandler(PasswordsDoNotMatchException.class)
+    public ResponseEntity<ApiResponse<Object>> handlePasswordsDoNotMatch(PasswordsDoNotMatchException ex) {
+        return handleUserException(UserServiceErrorCode.PASSWORDS_DONT_MATCH, "passwords_dont_match", ex);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiResponse<Object>> handleInvalidToken(InvalidTokenException ex) {
+        return handleAuthException(UserServiceErrorCode.INVALID_TOKEN, "invalid_token", ex);
+    }
+
+    @ExceptionHandler(RoleNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRoleNotFound(RoleNotFoundException ex) {
+        logger.error("Role not found: {}", ex.getMessage());
+        return handleException(UserServiceErrorCode.ROLE_NOT_FOUND, "role_not_found", ex, true);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRateLimitExceeded(RateLimitExceededException ex) {
+        return handleUserException(UserServiceErrorCode.RATE_LIMIT_EXCEEDED, "rate_limit_exceeded", ex);
     }
 }
