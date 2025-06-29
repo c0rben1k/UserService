@@ -1,7 +1,11 @@
 package by.algin.userservice.exception;
 
-public class RoleNotFoundException extends ApiException {
+public class RoleNotFoundException extends RuntimeException {
     public RoleNotFoundException() {
-        super(ErrorCode.ROLE_NOT_FOUND);
+        super(UserServiceErrorCode.ROLE_NOT_FOUND.getDefaultMessage());
+    }
+
+    public RoleNotFoundException(String message) {
+        super(message);
     }
 }

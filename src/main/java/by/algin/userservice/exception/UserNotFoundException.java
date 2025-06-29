@@ -1,11 +1,11 @@
 package by.algin.userservice.exception;
 
-public class UserNotFoundException extends ApiException {
-  public UserNotFoundException() {
-    super(ErrorCode.USER_NOT_FOUND);
-  }
+public class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException() {
+        super(UserServiceErrorCode.USER_NOT_FOUND.getDefaultMessage());
+    }
 
-  public UserNotFoundException(String message) {
-    super(ErrorCode.USER_NOT_FOUND, message);
-  }
+    public UserNotFoundException(String message) {
+        super(message);
+    }
 }

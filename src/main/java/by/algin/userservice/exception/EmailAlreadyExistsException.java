@@ -1,7 +1,11 @@
 package by.algin.userservice.exception;
 
-public class EmailAlreadyExistsException extends ApiException {
+public class EmailAlreadyExistsException extends RuntimeException {
     public EmailAlreadyExistsException() {
-        super(ErrorCode.EMAIL_ALREADY_EXISTS);
+        super(UserServiceErrorCode.EMAIL_ALREADY_EXISTS.getDefaultMessage());
+    }
+
+    public EmailAlreadyExistsException(String message) {
+        super(message);
     }
 }

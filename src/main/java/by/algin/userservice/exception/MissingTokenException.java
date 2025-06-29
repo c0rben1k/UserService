@@ -1,7 +1,13 @@
 package by.algin.userservice.exception;
 
-public class MissingTokenException extends ApiException {
+import by.algin.userservice.constants.MessageConstants;
+
+public class MissingTokenException extends RuntimeException {
     public MissingTokenException() {
-        super(ErrorCode.MISSING_TOKEN);
+        super(MessageConstants.MISSING_TOKEN);
+    }
+
+    public MissingTokenException(String message) {
+        super(message);
     }
 }
