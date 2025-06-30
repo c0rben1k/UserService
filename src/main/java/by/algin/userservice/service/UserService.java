@@ -1,5 +1,6 @@
 package by.algin.userservice.service;
 
+import by.algin.constants.CommonServiceConstants;
 import by.algin.dto.request.RegisterRequest;
 import by.algin.dto.response.ApiResponse;
 import by.algin.dto.response.UserResponse;
@@ -74,7 +75,7 @@ public class UserService {
 
         User user;
         switch (field.toLowerCase()) {
-            case MessageConstants.SEARCH_FIELD_ID:
+            case CommonServiceConstants.SEARCH_FIELD_ID:
                 try {
                     Long id = Long.parseLong(value);
                     user = userRepository.findById(id)
@@ -83,11 +84,11 @@ public class UserService {
                     throw new IllegalArgumentException(MessageConstants.INVALID_ID_FORMAT + value);
                 }
                 break;
-            case MessageConstants.SEARCH_FIELD_USERNAME:
+            case CommonServiceConstants.SEARCH_FIELD_USERNAME:
                 user = userRepository.findByUsername(value)
                         .orElseThrow(() -> new UserNotFoundException(MessageConstants.USER_NOT_FOUND_WITH_USERNAME + value));
                 break;
-            case MessageConstants.SEARCH_FIELD_EMAIL:
+            case CommonServiceConstants.SEARCH_FIELD_EMAIL:
                 user = userRepository.findByEmail(value)
                         .orElseThrow(() -> new UserNotFoundException(MessageConstants.USER_NOT_FOUND_WITH_EMAIL + value));
                 break;

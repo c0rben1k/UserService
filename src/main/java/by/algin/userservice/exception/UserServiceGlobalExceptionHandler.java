@@ -1,4 +1,4 @@
- package by.algin.userservice.exception;
+package by.algin.userservice.exception;
 
 import by.algin.common.BaseExceptionHandler;
 import by.algin.dto.response.ApiResponse;
