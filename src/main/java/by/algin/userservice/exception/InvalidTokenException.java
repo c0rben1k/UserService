@@ -1,11 +1,11 @@
 package by.algin.userservice.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+public class InvalidTokenException extends RuntimeException {
+    public InvalidTokenException() {
+        super(UserServiceErrorCode.INVALID_TOKEN.getDefaultMessage());
+    }
 
-@ResponseStatus(HttpStatus.UNAUTHORIZED)
-public class InvalidTokenException extends ApiException {
     public InvalidTokenException(String message) {
-        super(ErrorCode.INVALID_TOKEN, message);
+        super(message);
     }
 }

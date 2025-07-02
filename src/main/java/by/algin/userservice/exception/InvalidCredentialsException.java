@@ -1,7 +1,11 @@
 package by.algin.userservice.exception;
 
-public class InvalidCredentialsException extends ApiException {
+public class InvalidCredentialsException extends RuntimeException {
     public InvalidCredentialsException() {
-        super(ErrorCode.INVALID_CREDENTIALS);
+        super(UserServiceErrorCode.INVALID_CREDENTIALS.getDefaultMessage());
+    }
+
+    public InvalidCredentialsException(String message) {
+        super(message);
     }
 }

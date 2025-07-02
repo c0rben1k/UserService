@@ -26,12 +26,18 @@ public final class MessageConstants {
     public static final String UNSUPPORTED_TOKEN_TYPE = "Unsupported token type";
     public static final String TOKEN_VALIDATION_FAILED = "Token validation failed";
     public static final String USER_FOUND_SIMPLE = "User found";
-    public static final String USER_NOT_FOUND_WITH_ID = "User not found with id: ";
-    public static final String INVALID_ID_FORMAT = "Invalid id format: ";
+    @Deprecated
+    public static final String USER_NOT_FOUND_WITH_ID = "User not found with ID: ";
+    @Deprecated
+    public static final String INVALID_ID_FORMAT = "Invalid ID format: ";
+    @Deprecated
     public static final String USER_NOT_FOUND_WITH_USERNAME = "User not found with username: ";
+    @Deprecated
     public static final String USER_NOT_FOUND_WITH_EMAIL = "User not found with email: ";
+    @Deprecated
     public static final String INVALID_SEARCH_FIELD = "Invalid search field: ";
-    public static final String VALID_SEARCH_FIELDS = ". Use 'id', 'username', or 'email'.";
+    @Deprecated
+    public static final String VALID_SEARCH_FIELDS = ". Valid fields are: id, username, email";
 
     public static final String PROCESSING_LOGIN_REQUEST = "Processing login request for user: {}";
     public static final String LOGIN_SUCCESSFUL_FOR_USER = "Login successful for user: {}";
@@ -74,6 +80,32 @@ public final class MessageConstants {
     public static final String UNSUPPORTED_JWT_TOKEN = "Unsupported JWT token: {}";
     public static final String JWT_VALIDATION_FAILED = "JWT token validation failed: {}";
     public static final String FAILED_TO_CHECK_TOKEN_TYPE = "Failed to check token type: {}";
+
+    public static final String MISSING_TOKEN = "Missing token";
+    public static final String JWT_AUTHENTICATION_FAILED = "JWT authentication failed";
+
+    public static final String REASON_BAD_CREDENTIALS = "bad_credentials";
+    public static final String REASON_AUTHENTICATION_FAILED = "authentication_failed";
+    public static final String REASON_ACCESS_DENIED = "access_denied";
+    public static final String REASON_TOKEN_EXPIRED = "token_expired";
+    public static final String REASON_USER_NOT_FOUND = "user_not_found";
+    public static final String REASON_INVALID_EMAIL_FORMAT = "invalid_email_format";
+    public static final String REASON_ACCOUNT_ALREADY_CONFIRMED = "account_already_confirmed";
+
+    public static final String DETAIL_KEY_REASON = "reason";
+    public static final String DETAIL_KEY_ORIGINAL_MESSAGE = "originalMessage";
+    public static final String DETAIL_KEY_EXCEPTION_TYPE = "exceptionType";
+
+    public static final String SERVICE_NAME = "USER-SERVICE";
+
+    public static final String ERROR_MSG_AUTHENTICATION_FAILED = "Authentication failed";
+    public static final String ERROR_MSG_ACCESS_DENIED = "Access denied";
+    public static final String ERROR_MSG_TOKEN_EXPIRED = "Token has expired";
+    public static final String ERROR_MSG_ACCOUNT_DISABLED_FOR_USER = "Account is disabled for user: ";
+
+    public static final String SEARCH_FIELD_ID = "id";
+    public static final String SEARCH_FIELD_USERNAME = "username";
+    public static final String SEARCH_FIELD_EMAIL = "email";
 
     private MessageConstants() {}
 }
