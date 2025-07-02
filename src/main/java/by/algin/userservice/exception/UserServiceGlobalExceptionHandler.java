@@ -1,6 +1,9 @@
 package by.algin.userservice.exception;
 
 import by.algin.common.BaseExceptionHandler;
+import by.algin.common.dto.ErrorDetailsDTO;
+import by.algin.common.dto.ErrorDetailsDTOBuilder;
+import by.algin.common.exception.ApiErrorCode;
 import by.algin.dto.response.ApiResponse;
 import by.algin.userservice.constants.MessageConstants;
 import org.slf4j.Logger;
@@ -9,14 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
+@ControllerAdvice
 public class UserServiceGlobalExceptionHandler extends BaseExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceGlobalExceptionHandler.class);
@@ -26,46 +29,57 @@ public class UserServiceGlobalExceptionHandler extends BaseExceptionHandler {
         return MessageConstants.SERVICE_NAME;
     }
 
-    private ResponseEntity<ApiResponse<Object>> handleException(
-            UserServiceErrorCode errorCode,
-            String reasonKey,
-            Exception ex,
-            boolean includeOriginalMessage) {
-        return handleException(errorCode, reasonKey, ex, includeOriginalMessage, null);
-    }
 
-    private ResponseEntity<ApiResponse<Object>> handleException(
-            UserServiceErrorCode errorCode,
-            String reasonKey,
-            Exception ex,
-            boolean includeOriginalMessage,
-            Map<String, Object> additionalDetails) {
-        Map<String, Object> details = new HashMap<>();
-        details.put(MessageConstants.DETAIL_KEY_REASON, reasonKey);
 
-        if (includeOriginalMessage && ex.getMessage() != null) {
-            details.put(MessageConstants.DETAIL_KEY_ORIGINAL_MESSAGE, ex.getMessage());
-        }
-
-        if (ex instanceof AuthenticationException) {
-            details.put(MessageConstants.DETAIL_KEY_EXCEPTION_TYPE, ex.getClass().getSimpleName());
-        }
-
-        if (additionalDetails != null) {
-            details.putAll(additionalDetails);
-        }
-
-        return createError(errorCode.getCode(), errorCode.getDefaultMessage(), errorCode.getHttpStatus().value(), details);
-    }
-
-    private ResponseEntity<ApiResponse<Object>> handleUserException(UserServiceErrorCode errorCode, String reasonKey, Exception ex) {
+    private ResponseEntity<ApiResponse<Object>> handleUserException(ApiErrorCode errorCode, String reasonKey, Exception ex) {
         logger.warn("{}: {}", errorCode.getDefaultMessage(), ex.getMessage());
-        return handleException(errorCode, reasonKey, ex, true);
+        ErrorDetailsDTO errorDetails = createErrorDetails(errorCode, reasonKey, ex, true);
+        return createErrorResponse(errorDetails);
     }
 
-    private ResponseEntity<ApiResponse<Object>> handleAuthException(UserServiceErrorCode errorCode, String reasonKey, Exception ex) {
+    private ResponseEntity<ApiResponse<Object>> handleAuthException(ApiErrorCode errorCode, String reasonKey, Exception ex) {
         logger.warn("Authentication error - {}: {}", errorCode.getDefaultMessage(), ex.getMessage());
-        return handleException(errorCode, reasonKey, ex, false);
+
+        ErrorDetailsDTO errorDetails = createErrorDetails(errorCode, reasonKey, ex, false);
+        return createErrorResponse(errorDetails);
+    }
+
+    private ErrorDetailsDTO createErrorDetails(ApiErrorCode errorCode, String reasonKey, Exception ex, boolean includeOriginalMessage) {
+        ErrorDetailsDTOBuilder builder = ErrorDetailsDTOBuilder.fromApiErrorCode(errorCode)
+                .serviceName(getServiceName())
+                .reasonKey(reasonKey)
+                .exceptionType(ex)
+                .generateTraceId();
+
+        if (includeOriginalMessage && ex != null) {
+            builder.originalMessage(ex);
+        }
+
+        return builder.build();
+    }
+
+    private ResponseEntity<ApiResponse<Object>> createErrorResponse(ErrorDetailsDTO errorDetails) {
+        Map<String, Object> details = new HashMap<>();
+        details.put(MessageConstants.DETAIL_KEY_REASON, errorDetails.getReasonKey());
+        details.put(MessageConstants.DETAIL_KEY_EXCEPTION_TYPE, errorDetails.getExceptionType());
+        details.put("traceId", errorDetails.getTraceId());
+        details.put("serviceName", errorDetails.getServiceName());
+        details.put("category", errorDetails.getCategory());
+
+        if (errorDetails.getOriginalMessage() != null) {
+            details.put("originalMessage", errorDetails.getOriginalMessage());
+        }
+
+        if (errorDetails.getAdditionalDetails() != null) {
+            details.putAll(errorDetails.getAdditionalDetails());
+        }
+
+        return createError(
+                errorDetails.getErrorCode(),
+                errorDetails.getMessage(),
+                errorDetails.getStatus(),
+                details
+        );
     }
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -131,11 +145,12 @@ public class UserServiceGlobalExceptionHandler extends BaseExceptionHandler {
     @ExceptionHandler(RoleNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleRoleNotFound(RoleNotFoundException ex) {
         logger.error("Role not found: {}", ex.getMessage());
-        return handleException(UserServiceErrorCode.ROLE_NOT_FOUND, "role_not_found", ex, true);
+        return handleUserException(UserServiceErrorCode.ROLE_NOT_FOUND, "role_not_found", ex);
     }
 
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ApiResponse<Object>> handleRateLimitExceeded(RateLimitExceededException ex) {
         return handleUserException(UserServiceErrorCode.RATE_LIMIT_EXCEEDED, "rate_limit_exceeded", ex);
     }
+
 }

@@ -26,12 +26,18 @@ public final class MessageConstants {
     public static final String UNSUPPORTED_TOKEN_TYPE = "Unsupported token type";
     public static final String TOKEN_VALIDATION_FAILED = "Token validation failed";
     public static final String USER_FOUND_SIMPLE = "User found";
-    public static final String USER_NOT_FOUND_WITH_ID = "User not found with id: ";
-    public static final String INVALID_ID_FORMAT = "Invalid id format: ";
+    @Deprecated
+    public static final String USER_NOT_FOUND_WITH_ID = "User not found with ID: ";
+    @Deprecated
+    public static final String INVALID_ID_FORMAT = "Invalid ID format: ";
+    @Deprecated
     public static final String USER_NOT_FOUND_WITH_USERNAME = "User not found with username: ";
+    @Deprecated
     public static final String USER_NOT_FOUND_WITH_EMAIL = "User not found with email: ";
+    @Deprecated
     public static final String INVALID_SEARCH_FIELD = "Invalid search field: ";
-    public static final String VALID_SEARCH_FIELDS = ". Use 'id', 'username', or 'email'.";
+    @Deprecated
+    public static final String VALID_SEARCH_FIELDS = ". Valid fields are: id, username, email";
 
     public static final String PROCESSING_LOGIN_REQUEST = "Processing login request for user: {}";
     public static final String LOGIN_SUCCESSFUL_FOR_USER = "Login successful for user: {}";

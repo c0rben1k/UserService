@@ -1,6 +1,7 @@
 package by.algin.userservice.security;
 
 import by.algin.userservice.exception.JwtAuthenticationException;
+import by.algin.userservice.exception.MissingTokenException;
 import by.algin.userservice.service.JwtService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;

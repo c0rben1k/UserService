@@ -1,6 +1,7 @@
 package by.algin.userservice.service;
 
 import by.algin.userservice.constants.MessageConstants;
+import by.algin.userservice.exception.EmailSendingException;
 import by.algin.userservice.mapper.EmailMapper;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class EmailService {
             log.info(MessageConstants.CONFIRMATION_EMAIL_SENT_TO, to);
         } catch (Exception e) {
             log.error(MessageConstants.FAILED_TO_SEND_EMAIL_TO, to, e);
-            throw new RuntimeException(MessageConstants.FAILED_TO_SEND_EMAIL + e.getMessage(), e);
+            throw new EmailSendingException(MessageConstants.FAILED_TO_SEND_EMAIL + e.getMessage(), e);
         }
     }
 }
