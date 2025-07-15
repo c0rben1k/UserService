@@ -44,6 +44,37 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PathConstants.AUTH_LOGIN).permitAll()
+                        .requestMatchers(PathConstants.AUTH_REGISTER).permitAll()
+                        .requestMatchers(PathConstants.AUTH_REGISTRATION_SUCCESS).permitAll()
+                        .requestMatchers(PathConstants.AUTH_CONFIRM + "**").permitAll()
+                        .requestMatchers(PathConstants.AUTH_TOKEN_EXPIRED).permitAll()
+                        .requestMatchers(PathConstants.AUTH_RESEND_CONFIRMATION).permitAll()
+                        .requestMatchers(PathConstants.CSS).permitAll()
+                        .requestMatchers(PathConstants.JS).permitAll()
+                        .requestMatchers(PathConstants.IMAGES).permitAll()
+                        .requestMatchers(PathConstants.ROOT).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage(PathConstants.AUTH_LOGIN)
+                        .defaultSuccessUrl(PathConstants.DASHBOARD, true)
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl(PathConstants.AUTH_LOGOUT)
+                        .logoutSuccessUrl(PathConstants.AUTH_LOGIN)
+                        .permitAll()
+                );
+
+        return http.build();
+    }
+
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }

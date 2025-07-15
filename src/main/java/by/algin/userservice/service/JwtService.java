@@ -14,6 +14,7 @@ import io.jsonwebtoken.security.SignatureException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,13 +37,13 @@ public class JwtService {
 
 
 
-    @Value("${app.security.secret}")
+    @Value("${app.security.jwt.secret-key}")
     private String secretKey;
 
-    @Value("${app.security.access-token-expiration}")
+    @Value("${app.security.jwt.access-token-expiration}")
     private Long accessTokenExpiration;
 
-    @Value("${app.security.refresh-token-expiration}")
+    @Value("${app.security.jwt.refresh-token-expiration}")
     private Long refreshTokenExpiration;
 
     public String generateAccessToken(Authentication authentication) {
@@ -54,7 +55,7 @@ public class JwtService {
     }
 
     public String generateAccessToken(User user) {
-        return generateAccessToken(extractUsername(user));
+        return generateAccessToken(user.getUsername(), user.getId());
     }
 
     public String generateRefreshToken(User user) {
@@ -69,9 +70,41 @@ public class JwtService {
         return user.getUsername();
     }
 
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public Long extractUserId(String token) {
+        String userIdStr = extractClaim(token, claims -> claims.get("userId", String.class));
+        return userIdStr != null ? Long.parseLong(userIdStr) : null;
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+
+
     private String generateAccessToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
+        return generateToken(claims, username, accessTokenExpiration);
+    }
+
+    private String generateAccessToken(String username, Long userId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
+        claims.put("userId", userId.toString());
+        claims.put("username", username);
         return generateToken(claims, username, accessTokenExpiration);
     }
 

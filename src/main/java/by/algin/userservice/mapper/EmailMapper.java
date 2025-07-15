@@ -16,7 +16,7 @@ public class EmailMapper {
         try {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            String confirmationUrl = appProperties.getConfirmation().getUrl() + token;
+            String confirmationUrl = appProperties.getConfirmation().getUrl() + "/" + token;
             String subject = appProperties.getMail().getRegistrationSubject();
             String emailBody = appProperties.getMail().getRegistrationBody();
 

@@ -35,8 +35,15 @@ public class AppProperties {
 
     @Data
     public static class Security {
+        @Valid
         @NotNull
-        private String secret;
+        private final Jwt jwt = new Jwt();
+    }
+
+    @Data
+    public static class Jwt {
+        @NotNull
+        private String secretKey;
 
         @NotNull
         private Long accessTokenExpiration;

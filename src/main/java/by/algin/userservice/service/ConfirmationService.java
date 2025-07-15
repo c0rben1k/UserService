@@ -32,7 +32,7 @@ public class ConfirmationService {
             throw new InvalidEmailException(MessageConstants.USER_OR_EMAIL_NULL);
         }
         log.info(MessageConstants.CONFIRMATION_TOKEN_FOR_EMAIL, user.getEmail(), user.getConfirmationToken());
-        // emailService.sendConfirmationEmail(user.getEmail(), user.getConfirmationToken()); временно
+        emailService.sendConfirmationEmail(user.getEmail(), user.getConfirmationToken());
          log.info(MessageConstants.CONFIRMATION_EMAIL_SENT_TO_LOG, user.getEmail());
     }
 

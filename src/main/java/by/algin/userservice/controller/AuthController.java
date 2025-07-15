@@ -53,6 +53,25 @@ public class AuthController {
         return ResponseEntity.ok(authService.validateToken(request));
     }
 
+    @GetMapping(PathConstants.VALIDATE)
+    public ResponseEntity<Boolean> validateTokenSimple(@RequestParam("token") String token) {
+        log.info("=== SIMPLE TOKEN VALIDATION START ===");
+        log.info("Token received: {}", token.substring(0, Math.min(50, token.length())) + "...");
+        try {
+            TokenValidationRequest request = new TokenValidationRequest();
+            request.setToken(token);
+            log.info("Calling authService.validateToken()");
+            ApiResponse<TokenValidationResponse> response = authService.validateToken(request);
+            log.info("AuthService response: success={}, data={}", response.isSuccess(), response.getData());
+            boolean result = response.isSuccess() && response.getData() != null && response.getData().isValid();
+            log.info("Final validation result: {}", result);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error validating token: {}", e.getMessage(), e);
+            return ResponseEntity.ok(false);
+        }
+    }
+
     @GetMapping(CommonPathConstants.CONFIRM_ENDPOINT)
     public ResponseEntity<ApiResponse<String>> confirmAccount(@RequestParam(CommonPathConstants.PARAM_TOKEN) String token) {
         log.info("Processing account confirmation with token");

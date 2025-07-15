@@ -3,6 +3,9 @@ CREATE TABLE IF NOT EXISTS roles (
                        name VARCHAR(50) NOT NULL UNIQUE
 );
 
+INSERT INTO roles (name) VALUES ('ROLE_ADMIN') ON CONFLICT (name) DO NOTHING;
+INSERT INTO roles (name) VALUES ('ROLE_USER') ON CONFLICT (name) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS users (
                        id BIGSERIAL PRIMARY KEY,
                        username VARCHAR(50) NOT NULL UNIQUE,
