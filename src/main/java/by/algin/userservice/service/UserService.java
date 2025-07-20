@@ -1,5 +1,6 @@
 package by.algin.userservice.service;
 
+import by.algin.constants.CommonRoleConstants;
 import by.algin.constants.CommonServiceConstants;
 import by.algin.dto.request.RegisterRequest;
 import by.algin.dto.response.ApiResponse;
@@ -10,7 +11,6 @@ import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.UserNotFoundException;
 import by.algin.userservice.exception.RoleNotFoundException;
 import by.algin.userservice.mapper.UserMapper;
-import by.algin.userservice.constants.RoleConstants;
 import by.algin.userservice.repository.RoleRepository;
 import by.algin.userservice.repository.UserRepository;
 import by.algin.userservice.util.RateLimiter;
@@ -45,7 +45,7 @@ public class UserService {
     public ApiResponse<UserResponse> registerUser(RegisterRequest registerRequest) {
         log.info(MessageConstants.REGISTERING_USER, registerRequest.getUsername());
         userValidator.validateRegistrationRequest(registerRequest);
-        Role userRole = roleRepository.findByName(RoleConstants.USER)
+        Role userRole = roleRepository.findByName(CommonRoleConstants.USER)
                 .orElseThrow(RoleNotFoundException::new);
         User user = userMapper.toUserEntity(registerRequest);
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
@@ -70,6 +70,16 @@ public class UserService {
         log.info(MessageConstants.CHECKING_RATE_LIMIT, email);
         rateLimiter.checkRateLimit(email);
         confirmationService.resendConfirmationToken(email);
+    }
+
+    public String getUserEmailByToken(String token) {
+        try {
+            User user = userRepository.findByConfirmationToken(token).orElse(null);
+            return user != null ? user.getEmail() : null;
+        } catch (Exception e) {
+            log.warn("Could not find user by token: {}", e.getMessage());
+            return null;
+        }
     }
 
     public ApiResponse<UserResponse> getUserByField(String field, String value) {

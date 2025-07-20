@@ -31,7 +31,7 @@ public final class PathConstants {
     public static final String API_USERS_BY_USERNAME = "/api/users/by-username/{username}";
     public static final String API_USERS_BY_EMAIL = "/api/users/by-email/{email}";
     public static final String API_USERS_SEARCH = "/api/users/search";
-    
+
     public static final String SEARCH = "/search";
     public static final String USER_BY_ID = "/{userId}";
     public static final String USER_EXISTS = "/{userId}/exists";
@@ -56,4 +56,6 @@ public final class PathConstants {
     public static final String TEMPLATE_TOKEN_EXPIRED = "token-expired";
     public static final String TEMPLATE_TOKEN_RESENT = "token-resent";
     public static final String TEMPLATE_ERROR = "error";
+
+
 }

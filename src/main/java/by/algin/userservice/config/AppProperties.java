@@ -33,6 +33,14 @@ public class AppProperties {
     @NotNull
     private final RateLimit rateLimit = new RateLimit();
 
+    @Valid
+    @NotNull
+    private final DefaultAdmin defaultAdmin = new DefaultAdmin();
+
+    @Valid
+    @NotNull
+    private final Database database = new Database();
+
     @Data
     public static class Security {
         @Valid
@@ -92,6 +100,31 @@ public class AppProperties {
 
             @NotNull
             private Long windowSeconds;
+        }
+    }
+
+    @Data
+    public static class DefaultAdmin {
+        @NotNull
+        private String username;
+
+        @NotNull
+        private String email;
+
+        @NotNull
+        private String password;
+    }
+
+    @Data
+    public static class Database {
+        @Valid
+        @NotNull
+        private final Migration migration = new Migration();
+
+        @Data
+        public static class Migration {
+            @NotNull
+            private String location;
         }
     }
 }
