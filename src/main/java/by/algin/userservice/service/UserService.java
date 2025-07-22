@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,7 +48,7 @@ public class UserService {
                 .orElseThrow(RoleNotFoundException::new);
         User user = userMapper.toUserEntity(registerRequest);
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRoles(new HashSet<>(Collections.singletonList(userRole)));
+        user.setRoles(new HashSet<>(List.of(userRole)));
         user.setConfirmationToken(tokenService.generateToken());
         user.setTokenCreationTime(LocalDateTime.now());
         User savedUser = userRepository.save(user);
@@ -115,13 +114,50 @@ public class UserService {
         log.info("Getting users by IDs: {}", userIds);
 
         if (userIds == null || userIds.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         List<User> users = userRepository.findAllById(userIds);
         return users.stream()
                 .map(userMapper::toUserResponse)
                 .collect(Collectors.toList());
+    }
+
+ 
+    public ApiResponse<List<UserResponse>> getUsersByIdsWithValidation(List<Long> userIds) {
+        log.info("Getting users by IDs with validation: {}", userIds);
+
+        if (userIds == null || userIds.isEmpty()) {
+            return ApiResponse.error("INVALID_REQUEST", "User IDs list cannot be empty", null);
+        }
+
+        List<UserResponse> users = getUsersByIds(userIds);
+
+        if (users.isEmpty()) {
+            return ApiResponse.error("USERS_NOT_FOUND", "No users found for provided IDs", users);
+        }
+
+        if (users.size() < userIds.size()) {
+            return ApiResponse.success("Partial users retrieved", users);
+        }
+
+        return ApiResponse.success("Users retrieved successfully", users);
+    }
+
+    public ApiResponse<Boolean> checkUserExists(Long userId) {
+        log.info("Checking if user exists with ID: {}", userId);
+
+        if (userId == null || userId <= 0) {
+            return ApiResponse.error("INVALID_REQUEST", "User ID must be a positive number", false);
+        }
+
+        try {
+            getUserByField("id", userId.toString());
+            return ApiResponse.success("User exists", true);
+        } catch (Exception e) {
+            log.debug("User with ID {} does not exist: {}", userId, e.getMessage());
+            return ApiResponse.success("User does not exist", false);
+        }
     }
 
 }

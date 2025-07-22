@@ -177,7 +177,7 @@ public class AuthService {
         Long expiresIn = getTokenExpirationTime(accessToken);
 
         AuthResponse authResponse = authMapper.toAuthResponse(user, accessToken, refreshToken, expiresIn);
-        log.info(MessageConstants.AUTH_RESPONSE_ROLES, authResponse.getRoles());
+        log.debug("Auth response created for user: {}", user.getUsername());
 
         return authResponse;
     }

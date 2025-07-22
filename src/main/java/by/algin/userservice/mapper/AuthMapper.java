@@ -23,8 +23,7 @@ public class AuthMapper {
             return null;
         }
 
-        log.info("User roles in mapper: {}", user.getRoles());
-        log.info("User roles size: {}", user.getRoles() != null ? user.getRoles().size() : "null");
+        log.debug("Mapping user roles for user: {}", user.getUsername());
 
         HashSet<String> roles = user.getRoles() != null
                 ? user.getRoles().stream()
@@ -32,7 +31,7 @@ public class AuthMapper {
                 .collect(Collectors.toCollection(HashSet::new))
                 : new HashSet<>();
 
-        log.info("Mapped roles: {}", roles);
+        log.debug("Mapped {} roles for user", roles.size());
 
         return AuthResponse.builder()
                 .userId(user.getId())

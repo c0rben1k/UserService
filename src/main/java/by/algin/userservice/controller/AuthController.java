@@ -8,10 +8,11 @@ import by.algin.dto.response.ApiResponse;
 import by.algin.dto.response.AuthResponse;
 import by.algin.dto.response.TokenValidationResponse;
 import by.algin.dto.response.UserResponse;
-import by.algin.constants.CommonPathConstants;
+
 import by.algin.userservice.constants.MessageConstants;
 import by.algin.userservice.constants.PathConstants;
 import by.algin.userservice.service.AuthService;
+import by.algin.userservice.service.TokenValidationService;
 import by.algin.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,61 +28,74 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
+    private final TokenValidationService tokenValidationService;
 
-    @PostMapping(CommonPathConstants.REGISTER_ENDPOINT)
+    @PostMapping(PathConstants.REGISTER_ENDPOINT)
     public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         log.info("Processing registration request for: {}", registerRequest.getUsername());
-        return ResponseEntity.ok(userService.registerUser(registerRequest));
+        ApiResponse<UserResponse> response = userService.registerUser(registerRequest);
+        return ResponseEntity.status(201).body(response);
     }
 
-    @PostMapping(CommonPathConstants.LOGIN_ENDPOINT)
+    @PostMapping(PathConstants.LOGIN_ENDPOINT)
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         log.info("Processing login request for: {}", loginRequest.getUsernameOrEmail());
-        return ResponseEntity.ok(authService.login(loginRequest));
+        ApiResponse<AuthResponse> response = authService.login(loginRequest);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping(PathConstants.REFRESH_TOKEN)
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         log.info("Processing token refresh request");
-        return ResponseEntity.ok(authService.refreshToken(request));
+        ApiResponse<AuthResponse> response = authService.refreshToken(request);
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping(CommonPathConstants.API_AUTH_VALIDATE_TOKEN)
+    @PostMapping(PathConstants.API_AUTH_VALIDATE_TOKEN)
     public ResponseEntity<ApiResponse<TokenValidationResponse>> validateToken(
             @Valid @RequestBody TokenValidationRequest request) {
         log.info("Processing token validation request");
-        return ResponseEntity.ok(authService.validateToken(request));
+        ApiResponse<TokenValidationResponse> response = authService.validateToken(request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping(PathConstants.VALIDATE)
-    public ResponseEntity<Boolean> validateTokenSimple(@RequestParam("token") String token) {
-        log.info("=== SIMPLE TOKEN VALIDATION START ===");
-        log.info("Token received: {}", token.substring(0, Math.min(50, token.length())) + "...");
-        try {
-            TokenValidationRequest request = new TokenValidationRequest();
-            request.setToken(token);
-            log.info("Calling authService.validateToken()");
-            ApiResponse<TokenValidationResponse> response = authService.validateToken(request);
-            log.info("AuthService response: success={}, data={}", response.isSuccess(), response.getData());
-            boolean result = response.isSuccess() && response.getData() != null && response.getData().isValid();
-            log.info("Final validation result: {}", result);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            log.error("Error validating token: {}", e.getMessage(), e);
-            return ResponseEntity.ok(false);
+    public ResponseEntity<Boolean> validateTokenSimple(@RequestHeader("Authorization") String authHeader) {
+        boolean isValid = tokenValidationService.validateTokenSimple(authHeader);
+        return ResponseEntity.ok(isValid);
+    }
+
+    @GetMapping(PathConstants.VALIDATE + "/detailed")
+    public ResponseEntity<ApiResponse<TokenValidationResponse>> validateTokenDetailed(@RequestHeader("Authorization") String authHeader) {
+        ApiResponse<TokenValidationResponse> response = tokenValidationService.validateTokenFromHeader(authHeader);
+
+        if (response.isSuccess()) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(401).body(response);
         }
     }
 
-    @GetMapping(CommonPathConstants.CONFIRM_ENDPOINT)
-    public ResponseEntity<ApiResponse<String>> confirmAccount(@RequestParam(CommonPathConstants.PARAM_TOKEN) String token) {
-        log.info("Processing account confirmation with token");
-        return ResponseEntity.ok(userService.confirmAccount(token));
+    @PostMapping(PathConstants.CONFIRM_ENDPOINT)
+    public ResponseEntity<ApiResponse<String>> confirmAccount(@Valid @RequestBody TokenValidationRequest request) {
+        log.debug("Processing account confirmation request");
+        ApiResponse<String> response = userService.confirmAccount(request.getToken());
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping(CommonPathConstants.RESEND_CONFIRMATION_ENDPOINT)
-    public ResponseEntity<ApiResponse<String>> resendConfirmation(@RequestParam(CommonPathConstants.PARAM_EMAIL) String email) {
+    @PostMapping(PathConstants.RESEND_CONFIRMATION_ENDPOINT)
+    public ResponseEntity<ApiResponse<String>> resendConfirmation(@RequestParam(PathConstants.PARAM_EMAIL) String email) {
         log.info("Processing resend confirmation request for: {}", email);
         userService.resendConfirmationToken(email);
-        return ResponseEntity.ok(ApiResponse.success(MessageConstants.CONFIRMATION_EMAIL_RESENT, null));
+        ApiResponse<String> response = ApiResponse.success(MessageConstants.CONFIRMATION_EMAIL_RESENT, null);
+        return ResponseEntity.ok(response);и
+    }
+
+    @PostMapping(PathConstants.EMAIL_BY_TOKEN_ENDPOINT)
+    public ResponseEntity<ApiResponse<String>> getEmailByToken(@Valid @RequestBody TokenValidationRequest request) {
+        log.debug("Processing email retrieval request");
+        String email = userService.getUserEmailByToken(request.getToken());
+        ApiResponse<String> response = ApiResponse.success("Email retrieved successfully", email);
+        return ResponseEntity.ok(response);
     }
 }

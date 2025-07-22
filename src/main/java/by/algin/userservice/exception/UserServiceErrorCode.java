@@ -14,6 +14,10 @@ public enum UserServiceErrorCode implements ApiErrorCode {
     ACCOUNT_ALREADY_CONFIRMED("USER_007", "Account is already confirmed", HttpStatus.CONFLICT, "USER"),
     EMAIL_SENDING_ERROR("USER_EMAIL_001", "Error sending email", HttpStatus.INTERNAL_SERVER_ERROR, "EMAIL"),
 
+    VALIDATION_FAILED("USER_VALIDATION_001", "Validation failed", HttpStatus.BAD_REQUEST, "VALIDATION"),
+    INVALID_REQUEST_PARAMETER("USER_VALIDATION_002", "Invalid request parameter", HttpStatus.BAD_REQUEST, "VALIDATION"),
+    MISSING_REQUIRED_PARAMETER("USER_VALIDATION_003", "Missing required parameter", HttpStatus.BAD_REQUEST, "VALIDATION"),
+
     USER_NOT_FOUND(CommonErrorCodes.USER_NOT_FOUND.getCode(), CommonErrorCodes.USER_NOT_FOUND.getDefaultMessage(), CommonErrorCodes.USER_NOT_FOUND.getHttpStatus(), "USER"),
     EMAIL_ALREADY_EXISTS(CommonErrorCodes.EMAIL_ALREADY_EXISTS.getCode(), CommonErrorCodes.EMAIL_ALREADY_EXISTS.getDefaultMessage(), CommonErrorCodes.EMAIL_ALREADY_EXISTS.getHttpStatus(), "USER"),
     USERNAME_ALREADY_EXISTS(CommonErrorCodes.USERNAME_ALREADY_EXISTS.getCode(), CommonErrorCodes.USERNAME_ALREADY_EXISTS.getDefaultMessage(), CommonErrorCodes.USERNAME_ALREADY_EXISTS.getHttpStatus(), "USER"),
