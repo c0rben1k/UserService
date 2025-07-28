@@ -60,3 +60,13 @@ logs/
 
 src/main/resources/application.properties
 pom.xml
+
+*.md
+
+**/test/**
+*Test.java
+*Tests.java
+**/*Test.java
+**/*Tests.java
+src/test/
+test/
