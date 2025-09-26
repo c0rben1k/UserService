@@ -50,8 +50,7 @@ public class AuthController implements AuthApi {
     @PostMapping(PathConstants.REFRESH_TOKEN)
     public ApiResponse<AuthResponse> refreshToken(@RequestParam("refreshToken") String refreshToken) {
         log.info("Processing token refresh request");
-        TokenRefreshRequest request = new TokenRefreshRequest();
-        request.setRefreshToken(refreshToken);
+        TokenRefreshRequest request = TokenRefreshRequest.builder().refreshToken(refreshToken).build();
         return authService.refreshToken(request);
     }
 

@@ -18,8 +18,7 @@ public class TokenValidationService {
     public ApiResponse<TokenValidationResponse> validateTokenFromHeader(String authHeader) {
         String token = extractTokenFromAuthHeader(authHeader);
         
-        TokenValidationRequest request = new TokenValidationRequest();
-        request.setToken(token);
+        TokenValidationRequest request = TokenValidationRequest.builder().token(token).build();
         
         log.debug("Processing token validation request");
         return authService.validateToken(request);
