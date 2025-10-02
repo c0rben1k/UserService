@@ -49,10 +49,12 @@ public class UserService {
         User user = userMapper.toUserEntity(registerRequest);
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setRoles(new HashSet<>(List.of(userRole)));
-        user.setConfirmationToken(tokenService.generateToken());
+        String confirmationToken = tokenService.generateToken();
+        user.setConfirmationToken(confirmationToken);
         user.setTokenCreationTime(LocalDateTime.now());
         User savedUser = userRepository.save(user);
         log.info(MessageConstants.USER_REGISTERED_WITH_ID, savedUser.getId());
+        log.info("User registered with confirmation token: {}", confirmationToken);
         confirmationService.sendConfirmationEmail(savedUser);
         UserResponse userResponse = userMapper.toUserResponse(savedUser);
         return ApiResponse.success(MessageConstants.USER_REGISTERED_SUCCESSFULLY, userResponse);
