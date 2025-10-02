@@ -24,7 +24,7 @@ public class ConfirmationService {
     private final TokenService tokenService;
     private final EmailService emailService;
 
-    @Transactional
+    @Async
     public void sendConfirmationEmail(User user) {
         if (user == null || !StringUtils.hasText(user.getEmail())) {
             log.error(MessageConstants.CANNOT_SEND_EMAIL_USER_NULL);
