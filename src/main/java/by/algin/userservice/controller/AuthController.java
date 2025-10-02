@@ -34,14 +34,14 @@ public class AuthController implements AuthApi {
 
     @Override
     @PostMapping(PathConstants.REGISTER_ENDPOINT)
-    public ApiResponse<UserResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ApiResponse<UserResponse> register(@RequestBody RegisterRequest registerRequest) {
         log.info("Processing registration request for: {}", registerRequest.getUsername());
         return userService.registerUser(registerRequest);
     }
 
     @Override
     @PostMapping(PathConstants.LOGIN_ENDPOINT)
-    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ApiResponse<AuthResponse> login(@RequestBody LoginRequest loginRequest) {
         log.info("Processing login request for: {}", loginRequest.getUsernameOrEmail());
         return authService.login(loginRequest);
     }

@@ -13,13 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @ControllerAdvice
@@ -84,28 +79,12 @@ public class UserServiceGlobalExceptionHandler extends BaseExceptionHandler {
                                CommonErrorCodes.USERNAME_ALREADY_EXISTS.getHttpStatus().value());
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
-        log.warn("Validation failed: {}", errors);
-        return createMappedError(ex,
-                                CommonErrorCodes.VALIDATION_FAILED.getCode(),
-                                "Validation failed: " + errors.toString(),
-                                CommonErrorCodes.VALIDATION_FAILED.getHttpStatus().value());
-    }
-
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Invalid argument: {}", ex.getMessage());
         return createMappedError(ex,
-                                CommonErrorCodes.INVALID_INPUT.getCode(),
-                                ex.getMessage(),
-                                CommonErrorCodes.INVALID_INPUT.getHttpStatus().value());
+                               CommonErrorCodes.INVALID_INPUT.getCode(),
+                               ex.getMessage(),
+                               CommonErrorCodes.INVALID_INPUT.getHttpStatus().value());
     }
 }
