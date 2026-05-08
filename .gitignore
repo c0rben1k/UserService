@@ -58,9 +58,6 @@ logs/
 *.bak
 *.backup
 
-src/main/resources/application.properties
-pom.xml
-
 *.md
 
 **/test/**

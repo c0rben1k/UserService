@@ -83,6 +83,7 @@ public class UserService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<UserResponse> getUserByField(String field, String value) {
         log.info(MessageConstants.GETTING_USER_BY_FIELD, field, value);
 
@@ -112,6 +113,7 @@ public class UserService {
         return ApiResponse.success(MessageConstants.USER_FOUND_SIMPLE, userMapper.toUserResponse(user));
     }
 
+    @Transactional(readOnly = true)
     public List<UserResponse> getUsersByIds(List<Long> userIds) {
         log.info("Getting users by IDs: {}", userIds);
 
@@ -126,6 +128,7 @@ public class UserService {
     }
 
  
+    @Transactional(readOnly = true)
     public ApiResponse<List<UserResponse>> getUsersByIdsWithValidation(List<Long> userIds) {
         log.info("Getting users by IDs with validation: {}", userIds);
 
@@ -146,6 +149,7 @@ public class UserService {
         return ApiResponse.success("Users retrieved successfully", users);
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<Boolean> checkUserExists(Long userId) {
         log.info("Checking if user exists with ID: {}", userId);
 

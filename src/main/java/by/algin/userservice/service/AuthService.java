@@ -24,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Slf4j
@@ -36,6 +37,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final AuthMapper authMapper;
 
+    @Transactional
     public ApiResponse<AuthResponse> login(LoginRequest loginRequest) {
         log.info(MessageConstants.PROCESSING_LOGIN_REQUEST, loginRequest.getUsernameOrEmail());
 
@@ -59,6 +61,7 @@ public class AuthService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<AuthResponse> refreshToken(TokenRefreshRequest refreshRequest) {
         log.info(MessageConstants.PROCESSING_TOKEN_REFRESH);
 
@@ -79,6 +82,7 @@ public class AuthService {
         return ApiResponse.success(MessageConstants.TOKEN_REFRESHED_SUCCESSFULLY, authResponse);
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<TokenValidationResponse> validateToken(TokenValidationRequest validationRequest) {
         log.info(MessageConstants.PROCESSING_TOKEN_VALIDATION);
 
