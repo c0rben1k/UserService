@@ -14,6 +14,7 @@ import io.jsonwebtoken.security.SignatureException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,19 +35,17 @@ public class JwtService {
     private static final String REFRESH_TOKEN_TYPE = "refresh";
     private static final String ACCESS_TOKEN_TYPE = "access";
 
-
-
-    @Value("${app.security.secret}")
+    @Value("${app.security.jwt.secret-key}")
     private String secretKey;
 
-    @Value("${app.security.access-token-expiration}")
+    @Value("${app.security.jwt.access-token-expiration}")
     private Long accessTokenExpiration;
 
-    @Value("${app.security.refresh-token-expiration}")
+    @Value("${app.security.jwt.refresh-token-expiration}")
     private Long refreshTokenExpiration;
 
     public String generateAccessToken(Authentication authentication) {
-        return generateAccessToken(extractUsername(authentication));
+        return generateAccessToken(extractUsername(authentication), null);
     }
 
     public String generateRefreshToken(Authentication authentication) {
@@ -54,7 +53,7 @@ public class JwtService {
     }
 
     public String generateAccessToken(User user) {
-        return generateAccessToken(extractUsername(user));
+        return generateAccessToken(user.getUsername(), user.getId());
     }
 
     public String generateRefreshToken(User user) {
@@ -69,9 +68,39 @@ public class JwtService {
         return user.getUsername();
     }
 
-    private String generateAccessToken(String username) {
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public Long extractUserId(String token) {
+        String userIdStr = extractClaim(token, claims -> claims.get("userId", String.class));
+        return userIdStr != null ? Long.parseLong(userIdStr) : null;
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+
+
+    private String generateAccessToken(String username, Long userId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
+        claims.put("username", username);
+
+        if (userId != null) {
+            claims.put("userId", userId.toString());
+        }
+
         return generateToken(claims, username, accessTokenExpiration);
     }
 
@@ -96,19 +125,19 @@ public class JwtService {
             getAllClaimsFromToken(token);
             return true;
         } catch (ExpiredJwtException e) {
-            log.error(MessageConstants.JWT_TOKEN_EXPIRED, e.getMessage());
+            log.debug("JWT token expired");
             throw new TokenExpiredException(MessageConstants.TOKEN_HAS_EXPIRED);
         } catch (SignatureException e) {
-            log.error(MessageConstants.INVALID_JWT_SIGNATURE, e.getMessage());
+            log.debug("Invalid JWT signature");
             throw new InvalidTokenException(MessageConstants.INVALID_TOKEN_SIGNATURE);
         } catch (MalformedJwtException e) {
-            log.error(MessageConstants.INVALID_JWT_FORMAT, e.getMessage());
+            log.debug("Invalid JWT format");
             throw new InvalidTokenException(MessageConstants.INVALID_TOKEN_FORMAT);
         } catch (UnsupportedJwtException e) {
-            log.error(MessageConstants.UNSUPPORTED_JWT_TOKEN, e.getMessage());
+            log.debug("Unsupported JWT token");
             throw new InvalidTokenException(MessageConstants.UNSUPPORTED_TOKEN_TYPE);
         } catch (Exception e) {
-            log.error(MessageConstants.JWT_VALIDATION_FAILED, e.getMessage());
+            log.debug("JWT validation failed");
             throw new InvalidTokenException(MessageConstants.TOKEN_VALIDATION_FAILED);
         }
     }
@@ -171,7 +200,7 @@ public class JwtService {
             Claims claims = getAllClaimsFromToken(token);
             return isRefreshToken(claims);
         } catch (Exception e) {
-            log.error(MessageConstants.FAILED_TO_CHECK_TOKEN_TYPE, e.getMessage());
+            log.debug("Failed to check token type");
             return false;
         }
     }
@@ -189,7 +218,7 @@ public class JwtService {
         try {
             return REFRESH_TOKEN_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM, String.class));
         } catch (Exception e) {
-            log.error(MessageConstants.FAILED_TO_CHECK_TOKEN_TYPE, e.getMessage());
+            log.debug("Failed to check token type");
             return false;
         }
     }

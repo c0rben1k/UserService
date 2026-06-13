@@ -18,6 +18,7 @@ public class UserMapper {
         }
 
         return UserResponse.builder()
+                .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .roles(user.getRoles() != null ?

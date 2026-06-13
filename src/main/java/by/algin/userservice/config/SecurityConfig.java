@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -38,7 +40,44 @@ public class SecurityConfig {
                         .requestMatchers(PathConstants.API_USERS_SEARCH).authenticated()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .headers(headers -> headers
+                    .contentSecurityPolicy("default-src 'self'")
+                    .and()
+                    .frameOptions().deny()
+                    .xssProtection().and()
+                );
+
+       return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PathConstants.AUTH_LOGIN).permitAll()
+                        .requestMatchers(PathConstants.AUTH_REGISTER).permitAll()
+                        .requestMatchers(PathConstants.AUTH_REGISTRATION_SUCCESS).permitAll()
+                        .requestMatchers(PathConstants.AUTH_CONFIRM + "**").permitAll()
+                        .requestMatchers(PathConstants.AUTH_TOKEN_EXPIRED).permitAll()
+                        .requestMatchers(PathConstants.AUTH_RESEND_CONFIRMATION).permitAll()
+                        .requestMatchers(PathConstants.CSS).permitAll()
+                        .requestMatchers(PathConstants.JS).permitAll()
+                        .requestMatchers(PathConstants.IMAGES).permitAll()
+                        .requestMatchers(PathConstants.ROOT).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage(PathConstants.AUTH_LOGIN)
+                        .defaultSuccessUrl(PathConstants.DASHBOARD, true)
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl(PathConstants.AUTH_LOGOUT)
+                        .logoutSuccessUrl(PathConstants.AUTH_LOGIN)
+                        .permitAll()
+                );
 
         return http.build();
     }

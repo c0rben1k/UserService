@@ -25,14 +25,13 @@ public class ConfirmationService {
     private final EmailService emailService;
 
     @Async
-    @Transactional
     public void sendConfirmationEmail(User user) {
         if (user == null || !StringUtils.hasText(user.getEmail())) {
             log.error(MessageConstants.CANNOT_SEND_EMAIL_USER_NULL);
             throw new InvalidEmailException(MessageConstants.USER_OR_EMAIL_NULL);
         }
         log.info(MessageConstants.CONFIRMATION_TOKEN_FOR_EMAIL, user.getEmail(), user.getConfirmationToken());
-        // emailService.sendConfirmationEmail(user.getEmail(), user.getConfirmationToken()); временно
+        emailService.sendConfirmationEmail(user.getEmail(), user.getConfirmationToken());
          log.info(MessageConstants.CONFIRMATION_EMAIL_SENT_TO_LOG, user.getEmail());
     }
 
@@ -59,12 +58,18 @@ public class ConfirmationService {
 
     @Transactional
     public void confirmAccount(String token) {
-        if (!StringUtils.hasText(token)) {
+        String trimmedToken = token != null ? token.trim() : null;
+        log.info("Confirming account with token: '{}' (original length: {}, trimmed length: {})",
+                trimmedToken, token != null ? token.length() : 0, trimmedToken != null ? trimmedToken.length() : 0);
+        if (!StringUtils.hasText(trimmedToken)) {
             log.error(MessageConstants.CANNOT_CONFIRM_TOKEN_NULL);
             throw new InvalidTokenException(MessageConstants.TOKEN_NULL_OR_EMPTY);
         }
-        User user = userRepository.findByConfirmationToken(token)
-                .orElseThrow(() -> new InvalidTokenException(MessageConstants.INVALID_CONFIRMATION_TOKEN));
+        User user = userRepository.findByConfirmationToken(trimmedToken)
+                .orElseThrow(() -> {
+                    log.error("User not found for confirmation token: '{}'", trimmedToken);
+                    return new InvalidTokenException(MessageConstants.INVALID_CONFIRMATION_TOKEN);
+                });
 
         if (!StringUtils.hasText(user.getEmail())) {
             log.error(MessageConstants.CANNOT_CONFIRM_EMAIL_NULL, token);

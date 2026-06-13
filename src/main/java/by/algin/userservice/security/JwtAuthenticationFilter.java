@@ -1,7 +1,5 @@
 package by.algin.userservice.security;
 
-import by.algin.userservice.exception.JwtAuthenticationException;
-import by.algin.userservice.exception.MissingTokenException;
 import by.algin.userservice.service.JwtService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -10,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,7 +26,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final JwtAuthenticationEntryPoint unauthorizedHandler;
 
     @Override
     protected void doFilterInternal(
@@ -57,23 +55,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    sendUnauthorized(response, "Invalid or expired token");
+                    return;
                 }
             }
         } catch (JwtException e) {
-            log.error("JWT token validation failed: {}", e.getMessage());
-            handleAuthenticationException(request, response, e);
+            log.warn("JWT token validation failed: {}", e.getMessage());
+            sendUnauthorized(response, "Invalid token");
+            return;
+        } catch (Exception e) {
+            log.warn("Authentication failed: {}", e.getMessage());
+            sendUnauthorized(response, "Authentication failed");
             return;
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private void handleAuthenticationException(HttpServletRequest request, HttpServletResponse response, Exception e) throws IOException {
-        log.error("Authentication error: {}", e.getMessage());
-        unauthorizedHandler.commence(
-                request,
-                response,
-                new JwtAuthenticationException("JWT authentication failed: " + e.getMessage(), e)
-        );
+    private void sendUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.getWriter().write("{\"error\":\"" + message + "\"}");
     }
+
 }

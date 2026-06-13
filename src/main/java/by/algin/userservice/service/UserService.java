@@ -1,5 +1,6 @@
 package by.algin.userservice.service;
 
+import by.algin.constants.CommonRoleConstants;
 import by.algin.constants.CommonServiceConstants;
 import by.algin.dto.request.RegisterRequest;
 import by.algin.dto.response.ApiResponse;
@@ -10,7 +11,6 @@ import by.algin.userservice.entity.User;
 import by.algin.userservice.exception.UserNotFoundException;
 import by.algin.userservice.exception.RoleNotFoundException;
 import by.algin.userservice.mapper.UserMapper;
-import by.algin.userservice.constants.RoleConstants;
 import by.algin.userservice.repository.RoleRepository;
 import by.algin.userservice.repository.UserRepository;
 import by.algin.userservice.util.RateLimiter;
@@ -22,8 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,15 +44,17 @@ public class UserService {
     public ApiResponse<UserResponse> registerUser(RegisterRequest registerRequest) {
         log.info(MessageConstants.REGISTERING_USER, registerRequest.getUsername());
         userValidator.validateRegistrationRequest(registerRequest);
-        Role userRole = roleRepository.findByName(RoleConstants.USER)
+        Role userRole = roleRepository.findByName(CommonRoleConstants.USER)
                 .orElseThrow(RoleNotFoundException::new);
         User user = userMapper.toUserEntity(registerRequest);
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRoles(new HashSet<>(Collections.singletonList(userRole)));
-        user.setConfirmationToken(tokenService.generateToken());
+        user.setRoles(new HashSet<>(List.of(userRole)));
+        String confirmationToken = tokenService.generateToken();
+        user.setConfirmationToken(confirmationToken);
         user.setTokenCreationTime(LocalDateTime.now());
         User savedUser = userRepository.save(user);
         log.info(MessageConstants.USER_REGISTERED_WITH_ID, savedUser.getId());
+        log.info("User registered with confirmation token: {}", confirmationToken);
         confirmationService.sendConfirmationEmail(savedUser);
         UserResponse userResponse = userMapper.toUserResponse(savedUser);
         return ApiResponse.success(MessageConstants.USER_REGISTERED_SUCCESSFULLY, userResponse);
@@ -70,6 +73,17 @@ public class UserService {
         confirmationService.resendConfirmationToken(email);
     }
 
+    public String getUserEmailByToken(String token) {
+        try {
+            User user = userRepository.findByConfirmationToken(token).orElse(null);
+            return user != null ? user.getEmail() : null;
+        } catch (Exception e) {
+            log.warn("Could not find user by token: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    @Transactional(readOnly = true)
     public ApiResponse<UserResponse> getUserByField(String field, String value) {
         log.info(MessageConstants.GETTING_USER_BY_FIELD, field, value);
 
@@ -97,6 +111,59 @@ public class UserService {
         }
 
         return ApiResponse.success(MessageConstants.USER_FOUND_SIMPLE, userMapper.toUserResponse(user));
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> getUsersByIds(List<Long> userIds) {
+        log.info("Getting users by IDs: {}", userIds);
+
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<User> users = userRepository.findAllById(userIds);
+        return users.stream()
+                .map(userMapper::toUserResponse)
+                .collect(Collectors.toList());
+    }
+
+ 
+    @Transactional(readOnly = true)
+    public ApiResponse<List<UserResponse>> getUsersByIdsWithValidation(List<Long> userIds) {
+        log.info("Getting users by IDs with validation: {}", userIds);
+
+        if (userIds == null || userIds.isEmpty()) {
+            return ApiResponse.error("INVALID_REQUEST", "User IDs list cannot be empty", null);
+        }
+
+        List<UserResponse> users = getUsersByIds(userIds);
+
+        if (users.isEmpty()) {
+            return ApiResponse.error("USERS_NOT_FOUND", "No users found for provided IDs", users);
+        }
+
+        if (users.size() < userIds.size()) {
+            return ApiResponse.success("Partial users retrieved", users);
+        }
+
+        return ApiResponse.success("Users retrieved successfully", users);
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponse<Boolean> checkUserExists(Long userId) {
+        log.info("Checking if user exists with ID: {}", userId);
+
+        if (userId == null || userId <= 0) {
+            return ApiResponse.error("INVALID_REQUEST", "User ID must be a positive number", false);
+        }
+
+        try {
+            getUserByField("id", userId.toString());
+            return ApiResponse.success("User exists", true);
+        } catch (Exception e) {
+            log.debug("User with ID {} does not exist: {}", userId, e.getMessage());
+            return ApiResponse.success("User does not exist", false);
+        }
     }
 
 }

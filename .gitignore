@@ -1,5 +1,6 @@
 *.md
 
+bin/
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -47,9 +48,6 @@ build/
 mvnw
 mvnw.cmd
 src/main/resources/DB/sql.sql
-src/main/resources/application.properties
-src/test/java/by/algin/userservice/UserServiceApplicationTests.java
-pom.xml
 
 *.log
 logs/
@@ -59,3 +57,13 @@ logs/
 *~
 *.bak
 *.backup
+
+*.md
+
+**/test/**
+*Test.java
+*Tests.java
+**/*Test.java
+**/*Tests.java
+src/test/
+test/
